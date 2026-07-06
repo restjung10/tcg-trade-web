@@ -75,10 +75,10 @@ export function PostListTable({
                 <td className="hidden py-2 text-center text-zinc-500 dark:text-zinc-400 sm:table-cell">
                   {startIndex - index}
                 </td>
-                <td className="py-2">
+                <td className="w-full max-w-0 py-2">
                   <Link
                     href={`/boards/${boardType}/${post.id}`}
-                    className={`hover:underline ${
+                    className={`block truncate hover:underline ${
                       isCompleted
                         ? "text-zinc-400 line-through dark:text-zinc-600"
                         : "text-black dark:text-zinc-50"
