@@ -7,6 +7,7 @@ import {
   confirmPayment,
   shareTracking,
   confirmReceipt,
+  cancelTrade,
   getSharedAccountInfo,
 } from "@/lib/actions/tradeTransaction";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +20,7 @@ export type TradeTransaction = {
   tracking_number: string | null;
   shipped_at: string | null;
   completed_at: string | null;
+  cancelled_at: string | null;
 };
 
 type AccountInfo = {
@@ -100,13 +102,57 @@ export function TransactionPanel({
     );
   }
 
+  // 취소된 거래는 처음(계좌 전송 전) 상태로 되돌아간 것처럼 보여준다.
+  const shared = Boolean(tx?.account_shared_at) && !tx?.cancelled_at;
+
+  if (tx?.cancelled_at) {
+    return (
+      <div className="mb-4 flex flex-col gap-2 rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
+        <p className="text-zinc-500 dark:text-zinc-400">
+          거래가 취소되었습니다.
+        </p>
+        {isShipper ? (
+          <Button
+            size="sm"
+            disabled={pending}
+            onClick={() => runAction(() => shareAccount(chatRoomId))}
+            className="self-start"
+          >
+            계좌 다시 전송
+          </Button>
+        ) : (
+          <p className="text-zinc-500 dark:text-zinc-400">
+            상대방이 계좌를 다시 전송하면 여기에 표시됩니다.
+          </p>
+        )}
+        {error && <p className="text-red-500">{error}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="mb-4 flex flex-col gap-2 rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
-      <p className="font-medium text-black dark:text-zinc-50">
-        거래 진행 상황
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="font-medium text-black dark:text-zinc-50">
+          거래 진행 상황
+        </p>
+        {shared && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              if (window.confirm("거래를 취소하시겠습니까?")) {
+                runAction(() => cancelTrade(chatRoomId));
+              }
+            }}
+            className="text-xs text-red-500 hover:underline"
+          >
+            거래 취소
+          </button>
+        )}
+      </div>
 
-      {!tx?.account_shared_at &&
+      {!shared &&
         (isShipper ? (
           <Button
             size="sm"
@@ -122,7 +168,7 @@ export function TransactionPanel({
           </p>
         ))}
 
-      {tx?.account_shared_at && accountInfo && (
+      {shared && accountInfo && (
         <div className="rounded-md bg-zinc-50 p-2 dark:bg-zinc-900">
           <p className="text-black dark:text-zinc-50">
             {accountInfo.bankName} {accountInfo.accountNumber}
@@ -156,8 +202,8 @@ export function TransactionPanel({
         </div>
       )}
 
-      {tx?.account_shared_at &&
-        !tx.payment_confirmed_at &&
+      {shared &&
+        !tx?.payment_confirmed_at &&
         (isPayer ? (
           <Button
             size="sm"

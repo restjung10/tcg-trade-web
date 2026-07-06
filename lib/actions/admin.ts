@@ -72,6 +72,33 @@ export async function banBankAccountUser(userId: string, formData: FormData) {
   redirect("/admin/bank-accounts");
 }
 
+export async function unsuspendUser(userId: string) {
+  await assertAdmin();
+
+  const admin = createAdminClient();
+  await admin
+    .from("profiles")
+    .update({ suspended_at: null, suspension_reason: null })
+    .eq("id", userId);
+
+  redirect("/admin/users");
+}
+
+export async function unbanKakaoUser(kakaoUserId: string) {
+  await assertAdmin();
+
+  const admin = createAdminClient();
+  await admin.from("blocked_kakao_users").delete().eq("kakao_user_id", kakaoUserId);
+
+  // 탈퇴하지 않고 정지만 된 상태로 남아있는 프로필이 있으면 정지도 함께 해제한다.
+  await admin
+    .from("profiles")
+    .update({ suspended_at: null, suspension_reason: null })
+    .eq("kakao_user_id", kakaoUserId);
+
+  redirect("/admin/users");
+}
+
 export async function reviewBankAccount(
   accountId: string,
   decision: "approved" | "rejected",

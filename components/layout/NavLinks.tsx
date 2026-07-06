@@ -26,6 +26,7 @@ export function NavLinks({
       ? [
           { href: "/admin/bank-accounts", label: "계좌인증 관리" },
           { href: "/admin/reports", label: "신고 관리" },
+          { href: "/admin/users", label: "사용자 관리" },
         ]
       : []),
   ];

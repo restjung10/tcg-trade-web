@@ -60,7 +60,7 @@ export default async function ChatRoomPage({
   const { data: transaction } = await supabase
     .from("trade_transactions")
     .select(
-      "id, account_shared_at, payment_confirmed_at, tracking_number, shipped_at, completed_at",
+      "id, account_shared_at, payment_confirmed_at, tracking_number, shipped_at, completed_at, cancelled_at",
     )
     .eq("chat_room_id", roomId)
     .maybeSingle();

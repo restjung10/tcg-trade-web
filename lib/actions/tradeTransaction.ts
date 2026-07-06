@@ -76,18 +76,41 @@ export async function shareAccount(chatRoomId: string): Promise<ActionResult> {
 
   const { data: existing } = await admin
     .from("trade_transactions")
-    .select("id, account_shared_at")
+    .select("id, account_shared_at, cancelled_at")
     .eq("chat_room_id", chatRoomId)
     .maybeSingle();
 
-  if (existing?.account_shared_at) {
+  if (existing?.account_shared_at && !existing.cancelled_at) {
     return { error: "이미 계좌를 전송했습니다." };
   }
 
+  // 이중거래 방지: 같은 게시글의 다른 채팅방에서 이미 진행 중인(취소/완료되지 않은) 거래가 있으면 막는다.
+  const { data: otherActive } = await admin
+    .from("trade_transactions")
+    .select("id")
+    .eq("post_id", postId)
+    .not("chat_room_id", "eq", chatRoomId)
+    .not("account_shared_at", "is", null)
+    .is("completed_at", null)
+    .is("cancelled_at", null)
+    .maybeSingle();
+
+  if (otherActive) {
+    return { error: "이미 다른 구매자와 거래가 진행 중입니다." };
+  }
+
   if (existing) {
+    // 취소된 거래를 재시작하는 경우, 이전 단계 값들을 전부 초기화하고 처음부터 진행한다.
     await admin
       .from("trade_transactions")
-      .update({ account_shared_at: new Date().toISOString() })
+      .update({
+        account_shared_at: new Date().toISOString(),
+        payment_confirmed_at: null,
+        tracking_number: null,
+        shipped_at: null,
+        completed_at: null,
+        cancelled_at: null,
+      })
       .eq("id", existing.id);
   } else {
     await admin.from("trade_transactions").insert({
@@ -210,6 +233,52 @@ export async function confirmReceipt(chatRoomId: string): Promise<ActionResult> 
     .from("trade_transactions")
     .update({ completed_at: new Date().toISOString() })
     .eq("id", tx.id);
+
+  revalidatePath(`/chat/${chatRoomId}`);
+}
+
+export async function cancelTrade(chatRoomId: string): Promise<ActionResult> {
+  const ctx = await getRoomContext(chatRoomId);
+  if ("error" in ctx) {
+    return { error: ctx.error };
+  }
+  const { userId, postId, payerId, shipperId } = ctx;
+
+  if (userId !== payerId && userId !== shipperId) {
+    return { error: "거래 참여자만 취소할 수 있습니다." };
+  }
+
+  const admin = createAdminClient();
+  const { data: tx } = await admin
+    .from("trade_transactions")
+    .select("id, account_shared_at, completed_at, cancelled_at")
+    .eq("chat_room_id", chatRoomId)
+    .maybeSingle();
+
+  if (!tx?.account_shared_at) {
+    return { error: "아직 진행 중인 거래가 없습니다." };
+  }
+  if (tx.completed_at) {
+    return { error: "이미 완료된 거래는 취소할 수 없습니다." };
+  }
+  if (tx.cancelled_at) {
+    return { error: "이미 취소된 거래입니다." };
+  }
+
+  await admin
+    .from("trade_transactions")
+    .update({ cancelled_at: new Date().toISOString() })
+    .eq("id", tx.id);
+
+  const { data: post } = await admin
+    .from("posts")
+    .select("status")
+    .eq("id", postId)
+    .single();
+
+  if (post?.status === "reserved") {
+    await admin.from("posts").update({ status: "trading" }).eq("id", postId);
+  }
 
   revalidatePath(`/chat/${chatRoomId}`);
 }
