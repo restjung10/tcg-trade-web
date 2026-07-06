@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { boardTypeSchema } from "@/lib/validators/post";
 import { deletePost } from "@/lib/actions/posts";
+import { startChat } from "@/lib/actions/chat";
 
 const STATUS_LABEL = {
   trading: "거래중",
@@ -104,7 +105,7 @@ export default async function PostDetailPage({
         {post.content}
       </p>
 
-      {isAuthor && (
+      {isAuthor ? (
         <div className="mt-8 flex gap-2">
           <Link
             href={`/boards/${boardType}/${postId}/edit`}
@@ -121,6 +122,19 @@ export default async function PostDetailPage({
             </button>
           </form>
         </div>
+      ) : (
+        user && (
+          <div className="mt-8">
+            <form action={startChat.bind(null, boardType, postId)}>
+              <button
+                type="submit"
+                className="rounded-md bg-black px-4 py-2 text-sm text-white dark:bg-zinc-50 dark:text-black"
+              >
+                채팅하기
+              </button>
+            </form>
+          </div>
+        )
       )}
 
       <div className="mt-8">

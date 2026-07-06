@@ -5,6 +5,7 @@ const PROTECTED_PATTERNS = [
   /^\/mypage/,
   /^\/boards\/(sell|buy)\/write/,
   /^\/boards\/(sell|buy)\/[^/]+\/edit/,
+  /^\/chat/,
 ];
 const ONBOARDING_PATH = "/onboarding/nickname";
 
