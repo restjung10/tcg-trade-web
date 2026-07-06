@@ -11,6 +11,13 @@ export const BOARD_TITLE: Record<BoardType, string> = {
 export const postStatusSchema = z.enum(["trading", "reserved", "completed"]);
 export type PostStatus = z.infer<typeof postStatusSchema>;
 
+// "거래완료"는 채팅방에서의 실제 거래 절차(lib/actions/tradeTransaction.ts)를 통해서만
+// 전환되어야 하므로, 작성자가 상태 셀렉트에서 직접 고를 수 있는 값은 이 둘로 제한한다.
+export const authorSettablePostStatusSchema = z.enum(["trading", "reserved"]);
+export type AuthorSettablePostStatus = z.infer<
+  typeof authorSettablePostStatusSchema
+>;
+
 export const postSchema = z.object({
   title: z
     .string()

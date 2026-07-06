@@ -117,15 +117,22 @@ export default async function PostDetailPage({
             action={updatePostStatus.bind(null, boardType, postId)}
             className="flex items-center gap-2"
           >
-            <select name="status" defaultValue={status} className={inputClass}>
+            <select
+              name="status"
+              defaultValue={status === "completed" ? "trading" : status}
+              className={inputClass}
+            >
               <option value="trading">거래중</option>
               <option value="reserved">예약중</option>
-              <option value="completed">거래완료</option>
             </select>
             <Button type="submit" variant="secondary">
               상태 변경
             </Button>
           </form>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            "거래완료"는 채팅방에서 거래 절차(계좌 전송 → 입금확인 → 송장전송 → 수령확인)를
+            마치면 자동으로 전환됩니다.
+          </p>
           <div className="flex gap-2">
             <LinkButton
               href={`/boards/${boardType}/${postId}/edit`}

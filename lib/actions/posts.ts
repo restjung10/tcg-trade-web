@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   postSchema,
-  postStatusSchema,
+  authorSettablePostStatusSchema,
   type BoardType,
-  type PostStatus,
+  type AuthorSettablePostStatus,
 } from "@/lib/validators/post";
 import { processPendingImage } from "@/lib/image/process";
 
@@ -183,11 +183,15 @@ export async function updatePostStatus(
   postId: string,
   formData: FormData,
 ) {
-  const parsedStatus = postStatusSchema.safeParse(formData.get("status"));
+  // "거래완료"는 채팅방의 실제 거래 절차를 통해서만 전환된다 (lib/actions/tradeTransaction.ts).
+  // 여기서는 작성자가 직접 고를 수 있는 거래중/예약중만 허용한다.
+  const parsedStatus = authorSettablePostStatusSchema.safeParse(
+    formData.get("status"),
+  );
   if (!parsedStatus.success) {
     redirect(`/boards/${boardType}/${postId}`);
   }
-  const status: PostStatus = parsedStatus.data;
+  const status: AuthorSettablePostStatus = parsedStatus.data;
 
   const supabase = await createClient();
   const {
