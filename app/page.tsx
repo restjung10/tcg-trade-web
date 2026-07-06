@@ -62,7 +62,7 @@ export default async function Home() {
         </div>
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="flex flex-col gap-10">
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
