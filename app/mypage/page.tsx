@@ -1,14 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "@/components/auth/LogoutButton";
 import { BankAccountForm } from "@/components/mypage/BankAccountForm";
-
-const POST_STATUS_LABEL = {
-  trading: "거래중",
-  reserved: "예약중",
-  completed: "거래완료",
-} as const;
+import { StatusBadge } from "@/components/board/StatusBadge";
+import { BOARD_TITLE } from "@/lib/validators/post";
+import type { PostStatusValue } from "@/lib/ui";
 
 const BANK_STATUS_LABEL = {
   pending: "심사 중",
@@ -46,12 +42,9 @@ export default async function MyPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-black dark:text-zinc-50">
-          {profile?.nickname ?? "익명"}님, 환영합니다
-        </h1>
-        <LogoutButton />
-      </div>
+      <h1 className="mb-8 text-xl font-bold text-black dark:text-zinc-50">
+        {profile?.nickname ?? "익명"}님, 환영합니다
+      </h1>
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">
@@ -68,9 +61,9 @@ export default async function MyPage() {
                   <span className="text-black dark:text-zinc-50">
                     {post.title}
                   </span>
-                  <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
-                    {post.board_type === "sell" ? "판매" : "구매"} ·{" "}
-                    {POST_STATUS_LABEL[post.status as keyof typeof POST_STATUS_LABEL]}
+                  <span className="flex shrink-0 items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    {BOARD_TITLE[post.board_type as "sell" | "buy"]}
+                    <StatusBadge status={post.status as PostStatusValue} />
                   </span>
                 </Link>
               </li>

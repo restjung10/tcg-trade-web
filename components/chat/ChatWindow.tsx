@@ -71,7 +71,7 @@ export function ChatWindow({
               <div
                 className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
                   isMine
-                    ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
                     : "bg-zinc-100 text-black dark:bg-zinc-800 dark:text-zinc-50"
                 }`}
               >

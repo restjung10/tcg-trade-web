@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/lib/ui";
 
 export function MessageInput({
   roomId,
@@ -44,15 +46,14 @@ export function MessageInput({
           onChange={(e) => setValue(e.target.value)}
           placeholder="메시지를 입력하세요"
           maxLength={2000}
-          className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          className={`flex-1 ${inputClass}`}
         />
-        <button
+        <Button
           type="submit"
           disabled={sending || value.trim().length === 0}
-          className="rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-black"
         >
           전송
-        </button>
+        </Button>
       </form>
     </div>
   );

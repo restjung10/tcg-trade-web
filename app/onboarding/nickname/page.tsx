@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { setNickname } from "@/lib/actions/onboarding";
+import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/lib/ui";
 
 export default function NicknameOnboardingPage() {
   const [state, formAction, pending] = useActionState(setNickname, undefined);
@@ -18,16 +20,12 @@ export default function NicknameOnboardingPage() {
           maxLength={12}
           placeholder="2~12자 (한글/영문/숫자/_)"
           required
-          className="rounded-md border border-zinc-300 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          className={inputClass}
         />
         {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-black px-6 py-2 text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-black"
-        >
+        <Button type="submit" disabled={pending}>
           {pending ? "저장 중..." : "설정 완료"}
-        </button>
+        </Button>
       </form>
     </div>
   );

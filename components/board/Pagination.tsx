@@ -28,7 +28,7 @@ export function Pagination({
           href={`/boards/${boardType}?page=${page}${statusQuery}${qQuery}`}
           className={`rounded px-2 py-1 ${
             page === currentPage
-              ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+              ? "bg-indigo-600 text-white dark:bg-indigo-500"
               : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
           }`}
         >

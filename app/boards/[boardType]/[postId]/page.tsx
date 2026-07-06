@@ -2,15 +2,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { boardTypeSchema } from "@/lib/validators/post";
+import { boardTypeSchema, BOARD_TITLE } from "@/lib/validators/post";
 import { deletePost, updatePostStatus } from "@/lib/actions/posts";
 import { startChat } from "@/lib/actions/chat";
-
-const STATUS_LABEL = {
-  trading: "거래중",
-  reserved: "예약중",
-  completed: "거래완료",
-} as const;
+import { StatusBadge } from "@/components/board/StatusBadge";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { inputClass, type PostStatusValue } from "@/lib/ui";
 
 export default async function PostDetailPage({
   params,
@@ -52,7 +50,7 @@ export default async function PostDetailPage({
 
   const profile = post.profiles as unknown as { nickname: string } | null;
   const authorNickname = profile?.nickname ?? "알수없음";
-  const status = post.status as keyof typeof STATUS_LABEL;
+  const status = post.status as PostStatusValue;
 
   const { data: images } = await supabase
     .from("post_images")
@@ -72,20 +70,29 @@ export default async function PostDetailPage({
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+      <Link
+        href={`/boards/${boardType}`}
+        className="mb-4 inline-block text-sm text-zinc-500 hover:underline dark:text-zinc-400"
+      >
+        ← {BOARD_TITLE[boardType]} 목록
+      </Link>
+
       <div className="mb-4 border-b border-zinc-300 pb-4 dark:border-zinc-700">
-        <h1 className="text-xl font-bold text-black dark:text-zinc-50">
-          {post.title}
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-black dark:text-zinc-50">
+            {post.title}
+          </h1>
+          <StatusBadge status={status} />
+        </div>
         <div className="mt-2 flex gap-3 text-sm text-zinc-500 dark:text-zinc-400">
           <span>{authorNickname}</span>
           <span>{String(post.created_at).slice(0, 10)}</span>
           <span>조회 {post.view_count + 1}</span>
-          <span>{STATUS_LABEL[status]}</span>
         </div>
       </div>
 
       {post.price !== null && (
-        <p className="mb-4 text-lg font-semibold text-black dark:text-zinc-50">
+        <p className="mb-4 text-xl font-bold text-indigo-600 dark:text-indigo-400">
           {post.price.toLocaleString("ko-KR")}원
         </p>
       )}
@@ -104,63 +111,46 @@ export default async function PostDetailPage({
         </div>
       )}
 
-      <p className="whitespace-pre-wrap text-black dark:text-zinc-50">
-        {post.content}
-      </p>
-
       {isAuthor ? (
-        <div className="mt-8 flex flex-col gap-3">
+        <div className="mb-6 flex flex-col gap-3 border-b border-zinc-200 pb-6 dark:border-zinc-800">
           <form
             action={updatePostStatus.bind(null, boardType, postId)}
             className="flex items-center gap-2"
           >
-            <select
-              name="status"
-              defaultValue={status}
-              className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-            >
+            <select name="status" defaultValue={status} className={inputClass}>
               <option value="trading">거래중</option>
               <option value="reserved">예약중</option>
               <option value="completed">거래완료</option>
             </select>
-            <button
-              type="submit"
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
-            >
+            <Button type="submit" variant="secondary">
               상태 변경
-            </button>
+            </Button>
           </form>
           <div className="flex gap-2">
-            <Link
+            <LinkButton
               href={`/boards/${boardType}/${postId}/edit`}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+              variant="secondary"
             >
               수정
-            </Link>
+            </LinkButton>
             <form action={deletePost.bind(null, boardType, postId)}>
-              <button
-                type="submit"
-                className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-500 dark:border-red-900"
-              >
+              <Button type="submit" variant="danger">
                 삭제
-              </button>
+              </Button>
             </form>
           </div>
         </div>
       ) : (
         user && (
-          <div className="mt-8 flex items-center gap-2">
-            <form action={startChat.bind(null, boardType, postId)}>
-              <button
-                type="submit"
-                className="rounded-md bg-black px-4 py-2 text-sm text-white dark:bg-zinc-50 dark:text-black"
-              >
+          <div className="mb-6 flex items-center gap-3 border-b border-zinc-200 pb-6 dark:border-zinc-800">
+            <form action={startChat.bind(null, boardType, postId)} className="flex-1">
+              <Button type="submit" variant="primary" className="w-full">
                 채팅하기
-              </button>
+              </Button>
             </form>
             <Link
               href={`/boards/${boardType}/${postId}/report`}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+              className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
             >
               신고
             </Link>
@@ -169,19 +159,14 @@ export default async function PostDetailPage({
       )}
 
       {reported === "1" && (
-        <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
           신고가 접수되었습니다.
         </p>
       )}
 
-      <div className="mt-8">
-        <Link
-          href={`/boards/${boardType}`}
-          className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
-        >
-          목록으로
-        </Link>
-      </div>
+      <p className="whitespace-pre-wrap text-black dark:text-zinc-50">
+        {post.content}
+      </p>
     </div>
   );
 }

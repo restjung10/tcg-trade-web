@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { ImageUploader } from "@/components/board/ImageUploader";
+import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/lib/ui";
 import type { BoardType } from "@/lib/validators/post";
 
 type PostFormAction = (
@@ -30,7 +32,7 @@ export function PostForm({
         placeholder="제목 (2~100자)"
         defaultValue={defaultValues?.title}
         required
-        className="rounded-md border border-zinc-300 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+        className={inputClass}
       />
       <textarea
         name="content"
@@ -38,7 +40,7 @@ export function PostForm({
         defaultValue={defaultValues?.content}
         required
         rows={10}
-        className="rounded-md border border-zinc-300 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+        className={inputClass}
       />
       <input
         name="price"
@@ -46,7 +48,7 @@ export function PostForm({
         min={0}
         placeholder="가격 (선택, 원)"
         defaultValue={defaultValues?.price ?? ""}
-        className="rounded-md border border-zinc-300 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+        className={inputClass}
       />
       {imageUpload && (
         <ImageUploader
@@ -56,13 +58,9 @@ export function PostForm({
         />
       )}
       {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="self-start rounded-md bg-black px-6 py-2 text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-black"
-      >
+      <Button type="submit" disabled={pending} className="self-start">
         {pending ? "저장 중..." : submitLabel}
-      </button>
+      </Button>
     </form>
   );
 }

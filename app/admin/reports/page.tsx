@@ -7,6 +7,8 @@ import {
   suspendReportedUser,
   dismissReport,
 } from "@/lib/actions/admin";
+import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/lib/ui";
 
 export default async function AdminReportsPage() {
   const supabase = await createClient();
@@ -96,12 +98,9 @@ export default async function AdminReportsPage() {
               {row.post && (
                 <div className="flex flex-wrap items-center gap-2">
                   <form action={deleteReportedPost.bind(null, row.id, row.post.id)}>
-                    <button
-                      type="submit"
-                      className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-500 dark:border-red-900"
-                    >
+                    <Button type="submit" variant="danger" size="sm">
                       게시글 삭제
-                    </button>
+                    </Button>
                   </form>
                   <form
                     action={suspendReportedUser.bind(
@@ -115,22 +114,16 @@ export default async function AdminReportsPage() {
                       name="suspensionReason"
                       type="text"
                       placeholder="정지 사유(선택)"
-                      className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+                      className={`${inputClass} py-1`}
                     />
-                    <button
-                      type="submit"
-                      className="rounded-md bg-black px-3 py-1.5 text-sm text-white dark:bg-zinc-50 dark:text-black"
-                    >
+                    <Button type="submit" variant="danger" size="sm">
                       사용자 정지
-                    </button>
+                    </Button>
                   </form>
                   <form action={dismissReport.bind(null, row.id)}>
-                    <button
-                      type="submit"
-                      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
-                    >
+                    <Button type="submit" variant="secondary" size="sm">
                       무시
-                    </button>
+                    </Button>
                   </form>
                 </div>
               )}

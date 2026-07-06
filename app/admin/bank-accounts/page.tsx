@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/crypto";
 import { reviewBankAccount } from "@/lib/actions/admin";
+import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/lib/ui";
 
 const STATUS_LABEL = {
   pending: "심사 중",
@@ -94,7 +96,7 @@ export default async function AdminBankAccountsPage({
             href={`/admin/bank-accounts${tab.value === "all" ? "" : `?status=${tab.value}`}`}
             className={`rounded-full px-3 py-1 ${
               statusFilter === tab.value
-                ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                ? "bg-indigo-600 text-white dark:bg-indigo-500"
                 : "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
             }`}
           >
@@ -126,12 +128,9 @@ export default async function AdminBankAccountsPage({
               {row.status === "pending" && (
                 <div className="flex items-center gap-2">
                   <form action={reviewBankAccount.bind(null, row.id, "approved")}>
-                    <button
-                      type="submit"
-                      className="rounded-md bg-black px-3 py-1.5 text-sm text-white dark:bg-zinc-50 dark:text-black"
-                    >
+                    <Button type="submit" variant="primary" size="sm">
                       승인
-                    </button>
+                    </Button>
                   </form>
                   <form
                     action={reviewBankAccount.bind(null, row.id, "rejected")}
@@ -141,14 +140,11 @@ export default async function AdminBankAccountsPage({
                       name="rejectionReason"
                       type="text"
                       placeholder="반려 사유(선택)"
-                      className="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+                      className={`${inputClass} py-1`}
                     />
-                    <button
-                      type="submit"
-                      className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-500 dark:border-red-900"
-                    >
+                    <Button type="submit" variant="danger" size="sm">
                       거부
-                    </button>
+                    </Button>
                   </form>
                 </div>
               )}

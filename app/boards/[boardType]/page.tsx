@@ -1,16 +1,17 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { boardTypeSchema } from "@/lib/validators/post";
+import { boardTypeSchema, BOARD_TITLE } from "@/lib/validators/post";
 import {
   PostListTable,
   type PostListItem,
 } from "@/components/board/PostListTable";
 import { Pagination } from "@/components/board/Pagination";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/lib/ui";
+import Link from "next/link";
 
 const PAGE_SIZE = 20;
-
-const BOARD_TITLE = { sell: "판매 게시판", buy: "구매 게시판" } as const;
 
 const STATUS_TABS = [
   { value: "all", label: "전체" },
@@ -79,31 +80,28 @@ export default async function BoardListPage({
 
   return (
     <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-bold text-black dark:text-zinc-50">
           {BOARD_TITLE[boardType]}
         </h1>
-        <Link
-          href={`/boards/${boardType}/write`}
-          className="rounded-md bg-black px-4 py-2 text-sm text-white dark:bg-zinc-50 dark:text-black"
-        >
+        <LinkButton href={`/boards/${boardType}/write`} variant="primary">
           글쓰기
-        </Link>
+        </LinkButton>
       </div>
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2 text-sm">
           {STATUS_TABS.map((tab) => {
-            const params = new URLSearchParams();
-            if (tab.value !== "all") params.set("status", tab.value);
-            if (searchQuery) params.set("q", searchQuery);
-            const qs = params.toString();
+            const tabParams = new URLSearchParams();
+            if (tab.value !== "all") tabParams.set("status", tab.value);
+            if (searchQuery) tabParams.set("q", searchQuery);
+            const qs = tabParams.toString();
             return (
               <Link
                 key={tab.value}
                 href={`/boards/${boardType}${qs ? `?${qs}` : ""}`}
                 className={`rounded-full px-3 py-1 ${
                   statusFilter === tab.value
-                    ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
                     : "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
                 }`}
               >
@@ -121,14 +119,11 @@ export default async function BoardListPage({
             name="q"
             defaultValue={searchQuery}
             placeholder="제목/본문 검색"
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+            className={`${inputClass} flex-1 sm:flex-none`}
           />
-          <button
-            type="submit"
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
-          >
+          <Button type="submit" variant="secondary" size="sm">
             검색
-          </button>
+          </Button>
         </form>
       </div>
       <PostListTable
