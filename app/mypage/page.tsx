@@ -30,6 +30,12 @@ export default async function MyPage() {
     .eq("author_id", user.id)
     .order("created_at", { ascending: false });
 
+  const { data: trustStats } = await supabase
+    .from("profile_trust_stats")
+    .select("review_count, avg_rating")
+    .eq("profile_id", user.id)
+    .maybeSingle();
+
   const { data: bankAccount } = await supabase
     .from("bank_accounts")
     .select(
@@ -56,9 +62,14 @@ export default async function MyPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <h1 className="mb-8 text-xl font-bold text-black dark:text-zinc-50">
+      <h1 className="mb-2 text-xl font-bold text-black dark:text-zinc-50">
         {profile?.nickname ?? "익명"}님, 환영합니다
       </h1>
+      <p className="mb-8 text-sm text-zinc-500 dark:text-zinc-400">
+        {trustStats
+          ? `★${trustStats.avg_rating} · 거래 후기 ${trustStats.review_count}건`
+          : "아직 받은 거래 후기가 없습니다."}
+      </p>
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">

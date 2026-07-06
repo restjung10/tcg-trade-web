@@ -214,6 +214,59 @@ export async function confirmReceipt(chatRoomId: string): Promise<ActionResult> 
   revalidatePath(`/chat/${chatRoomId}`);
 }
 
+export async function submitReview(
+  chatRoomId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const ctx = await getRoomContext(chatRoomId);
+  if ("error" in ctx) {
+    return { error: ctx.error };
+  }
+  const { userId, payerId, shipperId } = ctx;
+
+  const revieweeId =
+    userId === payerId ? shipperId : userId === shipperId ? payerId : null;
+
+  if (!revieweeId) {
+    return { error: "거래 참여자만 후기를 남길 수 있습니다." };
+  }
+
+  const rating = Number(formData.get("rating"));
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { error: "별점을 선택해주세요." };
+  }
+
+  const comment = String(formData.get("comment") ?? "").trim().slice(0, 300);
+
+  const admin = createAdminClient();
+  const { data: tx } = await admin
+    .from("trade_transactions")
+    .select("id, completed_at")
+    .eq("chat_room_id", chatRoomId)
+    .maybeSingle();
+
+  if (!tx?.completed_at) {
+    return { error: "거래가 완료된 후에만 후기를 남길 수 있습니다." };
+  }
+
+  const { error } = await admin.from("trade_reviews").insert({
+    trade_transaction_id: tx.id,
+    reviewer_id: userId,
+    reviewee_id: revieweeId,
+    rating,
+    comment: comment || null,
+  });
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "이미 후기를 작성했습니다." };
+    }
+    return { error: "후기 작성 중 오류가 발생했습니다." };
+  }
+
+  revalidatePath(`/chat/${chatRoomId}`);
+}
+
 export async function getSharedAccountInfo(chatRoomId: string) {
   const ctx = await getRoomContext(chatRoomId);
   if ("error" in ctx) {

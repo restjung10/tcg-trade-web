@@ -10,16 +10,18 @@ const activeClass = "font-semibold text-indigo-600 dark:text-indigo-400";
 export function NavLinks({
   showChat,
   showAdmin,
+  unreadChatCount = 0,
 }: {
   showChat: boolean;
   showAdmin: boolean;
+  unreadChatCount?: number;
 }) {
   const pathname = usePathname();
 
-  const links = [
+  const links: { href: string; label: string; badge?: number }[] = [
     { href: "/boards/sell", label: "판매 게시판" },
     { href: "/boards/buy", label: "구매 게시판" },
-    ...(showChat ? [{ href: "/chat", label: "채팅" }] : []),
+    ...(showChat ? [{ href: "/chat", label: "채팅", badge: unreadChatCount }] : []),
     ...(showAdmin
       ? [
           { href: "/admin/bank-accounts", label: "계좌인증 관리" },
@@ -37,9 +39,16 @@ export function NavLinks({
           <Link
             key={link.href}
             href={link.href}
-            className={isActive ? activeClass : inactiveClass}
+            className={`inline-flex items-center gap-1 ${
+              isActive ? activeClass : inactiveClass
+            }`}
           >
             {link.label}
+            {!!link.badge && link.badge > 0 && (
+              <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                {link.badge > 9 ? "9+" : link.badge}
+              </span>
+            )}
           </Link>
         );
       })}

@@ -15,6 +15,7 @@ export async function Header() {
 
   let nickname: string | null = null;
   let role: string | null = null;
+  let unreadChatCount = 0;
 
   if (user) {
     const { data: profile } = await supabase
@@ -26,6 +27,19 @@ export async function Header() {
 
     const { data: statusRows } = await supabase.rpc("get_my_account_status");
     role = statusRows?.[0]?.role ?? null;
+
+    const { data: rooms } = await supabase
+      .from("chat_room_summaries")
+      .select("buyer_id, seller_id, buyer_last_read_at, seller_last_read_at, last_message_at")
+      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
+
+    unreadChatCount = (rooms ?? []).filter((room) => {
+      const isBuyer = room.buyer_id === user.id;
+      const myLastRead = isBuyer ? room.buyer_last_read_at : room.seller_last_read_at;
+      return (
+        room.last_message_at && new Date(room.last_message_at) > new Date(myLastRead)
+      );
+    }).length;
   }
 
   return (
@@ -38,7 +52,11 @@ export async function Header() {
           >
             TCG 카드 거래소
           </Link>
-          <NavLinks showChat={Boolean(user)} showAdmin={role === "admin"} />
+          <NavLinks
+            showChat={Boolean(user)}
+            showAdmin={role === "admin"}
+            unreadChatCount={unreadChatCount}
+          />
         </div>
         <div className="flex items-center gap-3 text-sm">
           {user ? (
