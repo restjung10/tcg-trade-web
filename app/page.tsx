@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 dark:bg-black">
@@ -8,6 +10,20 @@ export default function Home() {
         <p className="text-zinc-600 dark:text-zinc-400">
           사기당할 일 없는 TCG 카드 거래 커뮤니티 · 준비 중
         </p>
+        <div className="mt-4 flex gap-3">
+          <Link
+            href="/login"
+            className="rounded-md bg-black px-4 py-2 text-sm text-white dark:bg-zinc-50 dark:text-black"
+          >
+            로그인
+          </Link>
+          <Link
+            href="/mypage"
+            className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+          >
+            마이페이지
+          </Link>
+        </div>
       </div>
     </div>
   );
