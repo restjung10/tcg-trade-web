@@ -50,7 +50,7 @@ export async function Header() {
             href="/"
             className="text-base font-bold text-black dark:text-zinc-50"
           >
-            TCG 카드 거래소
+            TCGinside
           </Link>
           <NavLinks
             showChat={Boolean(user)}

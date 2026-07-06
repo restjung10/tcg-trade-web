@@ -47,11 +47,8 @@ export default async function Home() {
     <div className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
       <div className="mb-10 flex flex-col items-center gap-3 text-center">
         <h1 className="text-2xl font-bold text-black dark:text-zinc-50">
-          TCG 카드 거래소
+          TCGinside
         </h1>
-        <p className="text-zinc-600 dark:text-zinc-400">
-          사기당할 일 없는 TCG 카드 거래 커뮤니티
-        </p>
         <div className="mt-4 flex gap-3">
           <LinkButton href="/boards/sell" variant="primary">
             판매 게시판

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TCG 카드 거래소",
-  description: "사기당할 일 없는 TCG 카드 거래 커뮤니티",
+  title: "TCGinside",
+  description: "TCG 카드 거래 커뮤니티",
 };
 
 export default function RootLayout({

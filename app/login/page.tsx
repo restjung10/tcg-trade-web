@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-zinc-50 dark:bg-black">
       <h1 className="text-xl font-bold text-black dark:text-zinc-50">
-        TCG 카드 거래소 로그인
+        TCGinside 로그인
       </h1>
       <Suspense>
         <WithdrawnNotice />
