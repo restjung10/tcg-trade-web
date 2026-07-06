@@ -29,7 +29,13 @@ export function MessageInput({
       .insert({ room_id: roomId, sender_id: senderId, content });
 
     if (insertError) {
-      setError(`전송 실패: ${insertError.message}`);
+      if (insertError.code === "42501") {
+        setError(
+          "메시지를 보낼 권한이 없습니다. 계좌 인증이 필요하거나 계정이 제한되었을 수 있습니다.",
+        );
+      } else {
+        setError(`전송 실패: ${insertError.message}`);
+      }
     } else {
       setValue("");
     }

@@ -15,10 +15,14 @@ export default async function PostDetailPage({
   searchParams,
 }: {
   params: Promise<{ boardType: string; postId: string }>;
-  searchParams: Promise<{ reported?: string; chatLimited?: string }>;
+  searchParams: Promise<{
+    reported?: string;
+    chatLimited?: string;
+    bankRequired?: string;
+  }>;
 }) {
   const { boardType: boardTypeParam, postId } = await params;
-  const { reported, chatLimited } = await searchParams;
+  const { reported, chatLimited, bankRequired } = await searchParams;
   const parsedBoardType = boardTypeSchema.safeParse(boardTypeParam);
   if (!parsedBoardType.success) {
     notFound();
@@ -51,6 +55,16 @@ export default async function PostDetailPage({
   const profile = post.profiles as unknown as { nickname: string } | null;
   const authorNickname = profile?.nickname ?? "알수없음";
   const status = post.status as PostStatusValue;
+
+  let canChat = false;
+  if (user && !isAuthor) {
+    const { data: bankAccount } = await supabase
+      .from("bank_accounts")
+      .select("status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    canChat = bankAccount?.status === "approved";
+  }
 
   const { data: images } = await supabase
     .from("post_images")
@@ -150,11 +164,20 @@ export default async function PostDetailPage({
       ) : (
         user && (
           <div className="mb-6 flex items-center gap-3 border-b border-zinc-200 pb-6 dark:border-zinc-800">
-            <form action={startChat.bind(null, boardType, postId)} className="flex-1">
-              <Button type="submit" variant="primary" className="w-full">
-                채팅하기
-              </Button>
-            </form>
+            {canChat ? (
+              <form action={startChat.bind(null, boardType, postId)} className="flex-1">
+                <Button type="submit" variant="primary" className="w-full">
+                  채팅하기
+                </Button>
+              </form>
+            ) : (
+              <p className="flex-1 text-sm text-zinc-500 dark:text-zinc-400">
+                계좌 인증이 완료된 사용자만 채팅을 시작할 수 있습니다.{" "}
+                <Link href="/mypage" className="text-indigo-600 hover:underline dark:text-indigo-400">
+                  마이페이지에서 계좌 인증하기
+                </Link>
+              </p>
+            )}
             <Link
               href={`/boards/${boardType}/${postId}/report`}
               className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
@@ -174,6 +197,13 @@ export default async function PostDetailPage({
       {chatLimited === "1" && (
         <p className="mb-4 text-sm text-red-500">
           채팅방을 너무 자주 시작하고 있습니다. 잠시 후 다시 시도해주세요.
+        </p>
+      )}
+
+      {bankRequired === "1" && (
+        <p className="mb-4 text-sm text-red-500">
+          계좌 인증이 완료된 사용자만 채팅을 시작할 수 있습니다. 마이페이지에서
+          계좌를 등록하고 승인을 받아주세요.
         </p>
       )}
 

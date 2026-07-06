@@ -28,6 +28,17 @@ export async function startChat(boardType: BoardType, postId: string) {
     redirect(`/boards/${boardType}/${postId}`);
   }
 
+  // 계좌 인증(관리자 승인)이 완료된 사용자만 채팅을 시작할 수 있다 (RLS에서도 동일하게 강제됨).
+  const { data: bankAccount } = await supabase
+    .from("bank_accounts")
+    .select("status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (bankAccount?.status !== "approved") {
+    redirect(`/boards/${boardType}/${postId}?bankRequired=1`);
+  }
+
   const { data: existing } = await supabase
     .from("chat_rooms")
     .select("id")
