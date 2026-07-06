@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BankAccountForm } from "@/components/mypage/BankAccountForm";
+import { WithdrawButton } from "@/components/mypage/WithdrawButton";
 import { StatusBadge } from "@/components/board/StatusBadge";
 import { BOARD_TITLE } from "@/lib/validators/post";
 import type { PostStatusValue } from "@/lib/ui";
@@ -96,6 +97,19 @@ export default async function MyPage() {
           </div>
         )}
         <BankAccountForm />
+      </section>
+
+      <section className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">
+          회원탈퇴
+        </h2>
+        <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+          탈퇴 시 닉네임/프로필 사진/카카오 계정 연동 정보는 삭제되며 즉시
+          로그아웃됩니다. 작성한 게시글과 채팅 기록은 거래 상대방 보호를 위해
+          남아있으며, 같은 카카오 계정으로 다시 로그인하면 계정을 이어서
+          사용할 수 있습니다.
+        </p>
+        <WithdrawButton />
       </section>
     </div>
   );

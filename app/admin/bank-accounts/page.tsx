@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/crypto";
-import { reviewBankAccount } from "@/lib/actions/admin";
+import { reviewBankAccount, banBankAccountUser } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/lib/ui";
 
@@ -33,13 +33,9 @@ export default async function AdminBankAccountsPage({
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: statusRows } = await supabase.rpc("get_my_account_status");
 
-  if (profile?.role !== "admin") {
+  if (statusRows?.[0]?.role !== "admin") {
     notFound();
   }
 
@@ -51,7 +47,7 @@ export default async function AdminBankAccountsPage({
   let accountsQuery = supabase
     .from("bank_accounts")
     .select(
-      "id, bank_name, account_number_encrypted, account_holder_name, status, rejection_reason, created_at, profiles!user_id(nickname)",
+      "id, user_id, bank_name, account_number_encrypted, account_holder_name, status, rejection_reason, created_at, profiles!user_id(nickname)",
     );
 
   if (statusFilter !== "all") {
@@ -68,6 +64,7 @@ export default async function AdminBankAccountsPage({
 
   const rows = (accounts ?? []).map((row) => ({
     id: row.id,
+    userId: row.user_id,
     nickname:
       (row.profiles as unknown as { nickname: string } | null)?.nickname ??
       "알수없음",
@@ -147,6 +144,22 @@ export default async function AdminBankAccountsPage({
                     </Button>
                   </form>
                 </div>
+              )}
+              {row.status === "rejected" && (
+                <form
+                  action={banBankAccountUser.bind(null, row.userId)}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    name="banReason"
+                    type="text"
+                    placeholder="차단 사유(선택)"
+                    className={`${inputClass} py-1`}
+                  />
+                  <Button type="submit" variant="danger" size="sm">
+                    사용자 차단(재가입 금지)
+                  </Button>
+                </form>
               )}
             </li>
           ))}

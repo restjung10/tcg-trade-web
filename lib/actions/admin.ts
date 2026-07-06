@@ -14,17 +14,62 @@ async function assertAdmin() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: statusRows } = await supabase.rpc("get_my_account_status");
 
-  if (profile?.role !== "admin") {
+  if (statusRows?.[0]?.role !== "admin") {
     redirect("/");
   }
 
   return { supabase, user };
+}
+
+async function banUserCore(userId: string, formData: FormData) {
+  const { user } = await assertAdmin();
+
+  const reason =
+    String(formData.get("banReason") ?? "").slice(0, 500) || "관리자 차단";
+
+  const admin = createAdminClient();
+
+  const { data: target } = await admin
+    .from("profiles")
+    .select("kakao_user_id")
+    .eq("id", userId)
+    .single();
+
+  await admin
+    .from("profiles")
+    .update({ suspended_at: new Date().toISOString(), suspension_reason: reason })
+    .eq("id", userId);
+
+  // 카카오 고유 ID를 영구 차단 목록에 등록해, 이 프로필이 나중에 탈퇴/삭제되어도
+  // 같은 카카오 계정으로는 다시 로그인/재가입할 수 없게 한다.
+  if (target?.kakao_user_id) {
+    await admin.from("blocked_kakao_users").upsert({
+      kakao_user_id: target.kakao_user_id,
+      reason,
+      blocked_by: user.id,
+    });
+  }
+}
+
+export async function banReportedUser(
+  reportId: string,
+  userId: string,
+  formData: FormData,
+) {
+  await banUserCore(userId, formData);
+
+  const admin = createAdminClient();
+  await admin.from("reports").update({ status: "resolved" }).eq("id", reportId);
+
+  redirect("/admin/reports");
+}
+
+export async function banBankAccountUser(userId: string, formData: FormData) {
+  await banUserCore(userId, formData);
+
+  redirect("/admin/bank-accounts");
 }
 
 export async function reviewBankAccount(

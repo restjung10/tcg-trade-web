@@ -19,11 +19,13 @@ export async function Header() {
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("nickname, role")
+      .select("nickname")
       .eq("id", user.id)
       .single();
     nickname = profile?.nickname ?? null;
-    role = profile?.role ?? null;
+
+    const { data: statusRows } = await supabase.rpc("get_my_account_status");
+    role = statusRows?.[0]?.role ?? null;
   }
 
   return (

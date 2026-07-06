@@ -1,6 +1,19 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+
+function WithdrawnNotice() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("withdrawn") !== "1") return null;
+
+  return (
+    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      회원탈퇴가 완료되었습니다.
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const handleKakaoLogin = async () => {
@@ -18,6 +31,9 @@ export default function LoginPage() {
       <h1 className="text-xl font-bold text-black dark:text-zinc-50">
         TCG 카드 거래소 로그인
       </h1>
+      <Suspense>
+        <WithdrawnNotice />
+      </Suspense>
       <button
         onClick={handleKakaoLogin}
         className="rounded-md bg-[#FEE500] px-6 py-3 font-medium text-black hover:brightness-95"

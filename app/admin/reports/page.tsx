@@ -5,6 +5,7 @@ import { REPORT_REASON_LABEL, type ReportReason } from "@/lib/validators/report"
 import {
   deleteReportedPost,
   suspendReportedUser,
+  banReportedUser,
   dismissReport,
 } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/Button";
@@ -20,13 +21,9 @@ export default async function AdminReportsPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: statusRows } = await supabase.rpc("get_my_account_status");
 
-  if (profile?.role !== "admin") {
+  if (statusRows?.[0]?.role !== "admin") {
     notFound();
   }
 
@@ -118,6 +115,24 @@ export default async function AdminReportsPage() {
                     />
                     <Button type="submit" variant="danger" size="sm">
                       사용자 정지
+                    </Button>
+                  </form>
+                  <form
+                    action={banReportedUser.bind(
+                      null,
+                      row.id,
+                      row.post.author_id,
+                    )}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      name="banReason"
+                      type="text"
+                      placeholder="차단 사유(선택)"
+                      className={`${inputClass} py-1`}
+                    />
+                    <Button type="submit" variant="danger" size="sm">
+                      차단(재가입 금지)
                     </Button>
                   </form>
                   <form action={dismissReport.bind(null, row.id)}>

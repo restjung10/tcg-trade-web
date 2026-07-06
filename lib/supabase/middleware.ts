@@ -53,22 +53,19 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isProtected || path === ONBOARDING_PATH) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("onboarded, suspended_at")
-      .eq("id", user.id)
-      .single();
+    const { data: statusRows } = await supabase.rpc("get_my_account_status");
+    const status = statusRows?.[0];
 
-    if (profile?.suspended_at && path !== SUSPENDED_PATH) {
+    if (status?.suspended && path !== SUSPENDED_PATH) {
       const url = request.nextUrl.clone();
       url.pathname = SUSPENDED_PATH;
       return NextResponse.redirect(url);
     }
 
     if (
-      profile &&
-      !profile.suspended_at &&
-      !profile.onboarded &&
+      status &&
+      !status.suspended &&
+      !status.onboarded &&
       path !== ONBOARDING_PATH
     ) {
       const url = request.nextUrl.clone();
