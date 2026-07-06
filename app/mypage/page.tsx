@@ -1,17 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BankAccountForm } from "@/components/mypage/BankAccountForm";
+import { BankAccountSection } from "@/components/mypage/BankAccountSection";
 import { WithdrawButton } from "@/components/mypage/WithdrawButton";
 import { StatusBadge } from "@/components/board/StatusBadge";
 import { BOARD_TITLE } from "@/lib/validators/post";
 import type { PostStatusValue } from "@/lib/ui";
-
-const BANK_STATUS_LABEL = {
-  pending: "심사 중",
-  approved: "승인됨",
-  rejected: "반려됨",
-} as const;
+import { decrypt } from "@/lib/crypto";
 
 export default async function MyPage() {
   const supabase = await createClient();
@@ -37,9 +32,27 @@ export default async function MyPage() {
 
   const { data: bankAccount } = await supabase
     .from("bank_accounts")
-    .select("bank_name, account_holder_name, status, rejection_reason")
+    .select(
+      "bank_name, account_holder_name, account_number_encrypted, status, rejection_reason",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
+
+  const bankAccountView = bankAccount
+    ? {
+        bankName: bankAccount.bank_name,
+        accountHolderName: bankAccount.account_holder_name,
+        accountNumber: (() => {
+          try {
+            return decrypt(bankAccount.account_number_encrypted);
+          } catch {
+            return "복호화 실패";
+          }
+        })(),
+        status: bankAccount.status as "pending" | "approved" | "rejected",
+        rejectionReason: bankAccount.rejection_reason as string | null,
+      }
+    : null;
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
@@ -81,22 +94,7 @@ export default async function MyPage() {
         <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">
           계좌 인증
         </h2>
-        {bankAccount && (
-          <div className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
-            <p>
-              {bankAccount.bank_name} · {bankAccount.account_holder_name} ·{" "}
-              <span className="font-medium">
-                {BANK_STATUS_LABEL[bankAccount.status as keyof typeof BANK_STATUS_LABEL]}
-              </span>
-            </p>
-            {bankAccount.status === "rejected" && bankAccount.rejection_reason && (
-              <p className="mt-1 text-red-500">
-                반려 사유: {bankAccount.rejection_reason}
-              </p>
-            )}
-          </div>
-        )}
-        <BankAccountForm />
+        <BankAccountSection bankAccount={bankAccountView} />
       </section>
 
       <section className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
