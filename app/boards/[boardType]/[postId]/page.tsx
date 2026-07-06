@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { boardTypeSchema } from "@/lib/validators/post";
-import { deletePost } from "@/lib/actions/posts";
+import { deletePost, updatePostStatus } from "@/lib/actions/posts";
 import { startChat } from "@/lib/actions/chat";
 
 const STATUS_LABEL = {
@@ -106,21 +106,43 @@ export default async function PostDetailPage({
       </p>
 
       {isAuthor ? (
-        <div className="mt-8 flex gap-2">
-          <Link
-            href={`/boards/${boardType}/${postId}/edit`}
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+        <div className="mt-8 flex flex-col gap-3">
+          <form
+            action={updatePostStatus.bind(null, boardType, postId)}
+            className="flex items-center gap-2"
           >
-            수정
-          </Link>
-          <form action={deletePost.bind(null, boardType, postId)}>
+            <select
+              name="status"
+              defaultValue={status}
+              className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+            >
+              <option value="trading">거래중</option>
+              <option value="reserved">예약중</option>
+              <option value="completed">거래완료</option>
+            </select>
             <button
               type="submit"
-              className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-500 dark:border-red-900"
+              className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
             >
-              삭제
+              상태 변경
             </button>
           </form>
+          <div className="flex gap-2">
+            <Link
+              href={`/boards/${boardType}/${postId}/edit`}
+              className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+            >
+              수정
+            </Link>
+            <form action={deletePost.bind(null, boardType, postId)}>
+              <button
+                type="submit"
+                className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-500 dark:border-red-900"
+              >
+                삭제
+              </button>
+            </form>
+          </div>
         </div>
       ) : (
         user && (

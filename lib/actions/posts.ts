@@ -3,7 +3,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { postSchema, type BoardType } from "@/lib/validators/post";
+import {
+  postSchema,
+  postStatusSchema,
+  type BoardType,
+  type PostStatus,
+} from "@/lib/validators/post";
 import { processPendingImage } from "@/lib/image/process";
 
 type PostFormState = { error?: string } | undefined;
@@ -156,6 +161,41 @@ export async function updatePost(
   if (error) {
     return { error: "게시글 수정 중 오류가 발생했습니다." };
   }
+
+  redirect(`/boards/${boardType}/${postId}`);
+}
+
+export async function updatePostStatus(
+  boardType: BoardType,
+  postId: string,
+  formData: FormData,
+) {
+  const parsedStatus = postStatusSchema.safeParse(formData.get("status"));
+  if (!parsedStatus.success) {
+    redirect(`/boards/${boardType}/${postId}`);
+  }
+  const status: PostStatus = parsedStatus.data;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("author_id")
+    .eq("id", postId)
+    .single();
+
+  if (!post || post.author_id !== user.id) {
+    redirect(`/boards/${boardType}/${postId}`);
+  }
+
+  await supabase.from("posts").update({ status }).eq("id", postId);
 
   redirect(`/boards/${boardType}/${postId}`);
 }

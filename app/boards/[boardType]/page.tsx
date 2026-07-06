@@ -12,12 +12,18 @@ const PAGE_SIZE = 20;
 
 const BOARD_TITLE = { sell: "판매 게시판", buy: "구매 게시판" } as const;
 
+const STATUS_TABS = [
+  { value: "all", label: "전체" },
+  { value: "trading", label: "거래중" },
+  { value: "completed", label: "거래완료" },
+] as const;
+
 export default async function BoardListPage({
   params,
   searchParams,
 }: {
   params: Promise<{ boardType: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string }>;
 }) {
   const { boardType: boardTypeParam } = await params;
   const parsedBoardType = boardTypeSchema.safeParse(boardTypeParam);
@@ -26,19 +32,28 @@ export default async function BoardListPage({
   }
   const boardType = parsedBoardType.data;
 
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, status: statusParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
+  const statusFilter = STATUS_TABS.some((tab) => tab.value === statusParam)
+    ? statusParam!
+    : "all";
 
   const supabase = await createClient();
-  const { data, count } = await supabase
+  let query = supabase
     .from("posts")
     .select(
       "id, title, price, status, view_count, created_at, profiles(nickname)",
       { count: "exact" },
     )
-    .eq("board_type", boardType)
+    .eq("board_type", boardType);
+
+  if (statusFilter !== "all") {
+    query = query.eq("status", statusFilter);
+  }
+
+  const { data, count } = await query
     .order("created_at", { ascending: false })
     .range(from, to);
 
@@ -69,6 +84,21 @@ export default async function BoardListPage({
           글쓰기
         </Link>
       </div>
+      <div className="mb-4 flex gap-2 text-sm">
+        {STATUS_TABS.map((tab) => (
+          <Link
+            key={tab.value}
+            href={`/boards/${boardType}${tab.value === "all" ? "" : `?status=${tab.value}`}`}
+            className={`rounded-full px-3 py-1 ${
+              statusFilter === tab.value
+                ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                : "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
       <PostListTable
         posts={posts}
         boardType={boardType}
@@ -78,6 +108,7 @@ export default async function BoardListPage({
         boardType={boardType}
         currentPage={page}
         totalPages={totalPages}
+        status={statusFilter}
       />
     </div>
   );

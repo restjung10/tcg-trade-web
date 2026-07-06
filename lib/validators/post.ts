@@ -3,6 +3,9 @@ import { z } from "zod";
 export const boardTypeSchema = z.enum(["sell", "buy"]);
 export type BoardType = z.infer<typeof boardTypeSchema>;
 
+export const postStatusSchema = z.enum(["trading", "reserved", "completed"]);
+export type PostStatus = z.infer<typeof postStatusSchema>;
+
 export const postSchema = z.object({
   title: z
     .string()
