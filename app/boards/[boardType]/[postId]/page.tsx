@@ -62,12 +62,6 @@ export default async function PostDetailPage({
   const status = post.status as PostStatusValue;
   const cardType = post.card_type as CardType;
 
-  const { data: trustStats } = await supabase
-    .from("profile_trust_stats")
-    .select("review_count, avg_rating")
-    .eq("profile_id", post.author_id)
-    .maybeSingle();
-
   let canChat = false;
   if (user && !isAuthor) {
     const { data: bankAccount } = await supabase
@@ -114,14 +108,7 @@ export default async function PostDetailPage({
           <StatusBadge status={status} />
         </div>
         <div className="mt-2 flex gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <span>
-            {authorNickname}
-            {trustStats && (
-              <span className="ml-1 text-amber-500">
-                (★{trustStats.avg_rating} · 거래 {trustStats.review_count}건)
-              </span>
-            )}
-          </span>
+          <span>{authorNickname}</span>
           <span>{String(post.created_at).slice(0, 10)}</span>
           <span>조회 {post.view_count + 1}</span>
         </div>

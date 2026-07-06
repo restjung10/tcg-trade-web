@@ -8,7 +8,6 @@ import {
   shareTracking,
   confirmReceipt,
   getSharedAccountInfo,
-  submitReview,
 } from "@/lib/actions/tradeTransaction";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/lib/ui";
@@ -46,11 +45,6 @@ export function TransactionPanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [trackingInput, setTrackingInput] = useState("");
-  const [myReview, setMyReview] = useState<{ rating: number } | null | undefined>(
-    undefined,
-  );
-  const [ratingInput, setRatingInput] = useState(5);
-  const [commentInput, setCommentInput] = useState("");
 
   const isPayer = currentUserId === payerId;
   const isShipper = currentUserId === shipperId;
@@ -86,19 +80,6 @@ export function TransactionPanel({
     }
   }, [tx?.account_shared_at, accountInfo, chatRoomId]);
 
-  useEffect(() => {
-    if (tx?.completed_at && myReview === undefined) {
-      const supabase = createClient();
-      supabase
-        .from("trade_reviews")
-        .select("rating")
-        .eq("trade_transaction_id", tx.id)
-        .eq("reviewer_id", currentUserId)
-        .maybeSingle()
-        .then(({ data }) => setMyReview(data ?? null));
-    }
-  }, [tx?.completed_at, tx?.id, myReview, currentUserId]);
-
   const runAction = (
     action: () => Promise<{ error?: string } | undefined>,
   ) => {
@@ -113,65 +94,8 @@ export function TransactionPanel({
 
   if (tx?.completed_at) {
     return (
-      <div className="mb-4 flex flex-col gap-2 rounded-md border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950 dark:text-indigo-300">
-        <p>거래가 완료되었습니다.</p>
-        {myReview === undefined ? null : myReview ? (
-          <p className="text-indigo-600 dark:text-indigo-400">
-            상대방에게 {"★".repeat(myReview.rating)} 후기를 남겼습니다.
-          </p>
-        ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData();
-              formData.set("rating", String(ratingInput));
-              formData.set("comment", commentInput);
-              setError(null);
-              startTransition(async () => {
-                const result = await submitReview(chatRoomId, formData);
-                if (result?.error) {
-                  setError(result.error);
-                } else {
-                  setMyReview({ rating: ratingInput });
-                }
-              });
-            }}
-            className="flex flex-col gap-2"
-          >
-            <p className="font-medium text-black dark:text-zinc-50">
-              상대방과의 거래는 어떠셨나요?
-            </p>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setRatingInput(value)}
-                  className={`text-xl ${
-                    value <= ratingInput
-                      ? "text-amber-500"
-                      : "text-zinc-300 dark:text-zinc-700"
-                  }`}
-                  aria-label={`별점 ${value}점`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-            <textarea
-              value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value)}
-              placeholder="후기를 남겨주세요 (선택, 300자 이내)"
-              rows={2}
-              maxLength={300}
-              className={inputClass}
-            />
-            <Button type="submit" size="sm" disabled={pending} className="self-start">
-              후기 등록
-            </Button>
-          </form>
-        )}
-        {error && <p className="text-red-500">{error}</p>}
+      <div className="mb-4 rounded-md border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950 dark:text-indigo-300">
+        거래가 완료되었습니다.
       </div>
     );
   }
