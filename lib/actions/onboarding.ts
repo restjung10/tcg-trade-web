@@ -15,6 +15,10 @@ export async function setNickname(
     return { error: parsed.error.issues[0].message };
   }
 
+  if (formData.get("agreeTerms") !== "on" || formData.get("agreePrivacy") !== "on") {
+    return { error: "이용약관과 개인정보 수집·이용에 모두 동의해야 합니다." };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,9 +28,15 @@ export async function setNickname(
     redirect("/login");
   }
 
+  const now = new Date().toISOString();
   const { error } = await supabase
     .from("profiles")
-    .update({ nickname: parsed.data, onboarded: true })
+    .update({
+      nickname: parsed.data,
+      onboarded: true,
+      terms_agreed_at: now,
+      privacy_agreed_at: now,
+    })
     .eq("id", user.id);
 
   if (error) {

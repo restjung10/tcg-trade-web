@@ -21,6 +21,10 @@ export async function submitBankAccount(
     return { error: parsed.error.issues[0].message };
   }
 
+  if (formData.get("agreeBankInfo") !== "on") {
+    return { error: "계좌정보 수집·이용에 동의해야 합니다." };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
