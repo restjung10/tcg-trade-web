@@ -37,6 +37,19 @@ export async function createPost(
     redirect("/login");
   }
 
+  // 이미지 검증(Sightengine 호출)은 비용이 드는 작업이므로, 그 전에 먼저 rate limit을 확인한다.
+  const { data: allowed } = await supabase.rpc("check_rate_limit", {
+    p_action: "create_post",
+    p_max_count: 5,
+    p_window_seconds: 300,
+  });
+
+  if (!allowed) {
+    return {
+      error: "게시글을 너무 자주 작성하고 있습니다. 잠시 후 다시 시도해주세요.",
+    };
+  }
+
   const imagePaths = formData
     .getAll("imagePaths")
     .filter((v): v is string => typeof v === "string" && v.length > 0);

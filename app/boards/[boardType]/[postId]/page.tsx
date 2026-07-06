@@ -15,10 +15,10 @@ export default async function PostDetailPage({
   searchParams,
 }: {
   params: Promise<{ boardType: string; postId: string }>;
-  searchParams: Promise<{ reported?: string }>;
+  searchParams: Promise<{ reported?: string; chatLimited?: string }>;
 }) {
   const { boardType: boardTypeParam, postId } = await params;
-  const { reported } = await searchParams;
+  const { reported, chatLimited } = await searchParams;
   const parsedBoardType = boardTypeSchema.safeParse(boardTypeParam);
   if (!parsedBoardType.success) {
     notFound();
@@ -161,6 +161,12 @@ export default async function PostDetailPage({
       {reported === "1" && (
         <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
           신고가 접수되었습니다.
+        </p>
+      )}
+
+      {chatLimited === "1" && (
+        <p className="mb-4 text-sm text-red-500">
+          채팅방을 너무 자주 시작하고 있습니다. 잠시 후 다시 시도해주세요.
         </p>
       )}
 

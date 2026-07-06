@@ -30,6 +30,18 @@ export async function submitBankAccount(
     redirect("/login");
   }
 
+  const { data: allowed } = await supabase.rpc("check_rate_limit", {
+    p_action: "submit_bank_account",
+    p_max_count: 5,
+    p_window_seconds: 3600,
+  });
+
+  if (!allowed) {
+    return {
+      error: "계좌 정보를 너무 자주 제출하고 있습니다. 잠시 후 다시 시도해주세요.",
+    };
+  }
+
   const accountNumberEncrypted = encrypt(parsed.data.accountNumber);
 
   const { error } = await supabase.from("bank_accounts").upsert(

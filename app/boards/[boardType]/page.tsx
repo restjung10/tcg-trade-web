@@ -56,8 +56,11 @@ export default async function BoardListPage({
   }
 
   if (searchQuery) {
-    const escaped = searchQuery.replace(/[%,]/g, "");
-    query = query.or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`);
+    // PostgREST or() 필터 문법에 쓰이는 메타문자를 전부 제거해 필터 인젝션을 막는다.
+    const escaped = searchQuery.replace(/[%,()."]/g, "");
+    if (escaped) {
+      query = query.or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`);
+    }
   }
 
   const { data, count } = await query

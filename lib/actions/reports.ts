@@ -31,6 +31,16 @@ export async function submitReport(
     redirect("/login");
   }
 
+  const { data: allowed } = await supabase.rpc("check_rate_limit", {
+    p_action: "submit_report",
+    p_max_count: 10,
+    p_window_seconds: 600,
+  });
+
+  if (!allowed) {
+    return { error: "신고를 너무 자주 접수하고 있습니다. 잠시 후 다시 시도해주세요." };
+  }
+
   const { error } = await supabase.from("reports").insert({
     post_id: postId,
     reporter_id: user.id,
