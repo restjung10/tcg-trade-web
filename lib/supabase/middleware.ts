@@ -1,7 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/mypage"];
+const PROTECTED_PATTERNS = [
+  /^\/mypage/,
+  /^\/boards\/(sell|buy)\/write/,
+  /^\/boards\/(sell|buy)\/[^/]+\/edit/,
+];
 const ONBOARDING_PATH = "/onboarding/nickname";
 
 export async function updateSession(request: NextRequest) {
@@ -33,9 +37,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    path.startsWith(prefix),
-  );
+  const isProtected = PROTECTED_PATTERNS.some((pattern) => pattern.test(path));
 
   if (!user) {
     if (isProtected) {
