@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/crypto";
 import { reviewBankAccount, banBankAccountUser } from "@/lib/actions/admin";
 import { Button } from "@/components/ui/Button";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { inputClass } from "@/lib/ui";
 
 const STATUS_LABEL = {
@@ -113,8 +114,9 @@ export default async function AdminBankAccountsPage({
                 <p className="font-medium text-black dark:text-zinc-50">
                   {row.nickname} · {STATUS_LABEL[row.status]}
                 </p>
-                <p className="text-zinc-600 dark:text-zinc-400">
+                <p className="flex flex-wrap items-center gap-2 text-zinc-600 dark:text-zinc-400">
                   {row.bankName} · {row.accountHolderName} · {row.accountNumber}
+                  <CopyButton text={row.accountNumber} />
                 </p>
                 {row.rejectionReason && (
                   <p className="text-red-500">
