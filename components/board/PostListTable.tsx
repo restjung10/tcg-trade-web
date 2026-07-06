@@ -48,7 +48,9 @@ export function PostListTable({
             <th className="hidden w-14 py-2 text-center font-normal sm:table-cell">
               번호
             </th>
-            <th className="py-2 text-left font-normal">제목</th>
+            <th className="w-[45%] py-2 text-left font-normal sm:w-auto">
+              제목
+            </th>
             <th className="hidden w-28 py-2 text-center font-normal md:table-cell">
               글쓴이
             </th>
@@ -58,8 +60,12 @@ export function PostListTable({
             <th className="hidden w-16 py-2 text-center font-normal md:table-cell">
               조회
             </th>
-            <th className="w-24 py-2 text-center font-normal">가격</th>
-            <th className="w-20 py-2 text-center font-normal">상태</th>
+            <th className="w-[30%] py-2 text-center font-normal sm:w-24">
+              가격
+            </th>
+            <th className="w-[25%] py-2 text-center font-normal sm:w-20">
+              상태
+            </th>
           </tr>
         </thead>
         <tbody>
