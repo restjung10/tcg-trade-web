@@ -19,6 +19,7 @@ export async function createPost(
   formData: FormData,
 ): Promise<PostFormState> {
   const parsed = postSchema.safeParse({
+    cardType: formData.get("cardType"),
     title: formData.get("title"),
     content: formData.get("content"),
     price: formData.get("price"),
@@ -112,6 +113,7 @@ export async function createPost(
     .insert({
       author_id: user.id,
       board_type: boardType,
+      card_type: parsed.data.cardType,
       title: parsed.data.title,
       content: parsed.data.content,
       price: parsed.data.price,
@@ -148,6 +150,7 @@ export async function updatePost(
   formData: FormData,
 ): Promise<PostFormState> {
   const parsed = postSchema.safeParse({
+    cardType: formData.get("cardType"),
     title: formData.get("title"),
     content: formData.get("content"),
     price: formData.get("price"),
@@ -179,6 +182,7 @@ export async function updatePost(
   const { error } = await supabase
     .from("posts")
     .update({
+      card_type: parsed.data.cardType,
       title: parsed.data.title,
       content: parsed.data.content,
       price: parsed.data.price,

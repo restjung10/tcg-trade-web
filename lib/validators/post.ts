@@ -8,6 +8,14 @@ export const BOARD_TITLE: Record<BoardType, string> = {
   buy: "구매 게시판",
 };
 
+export const cardTypeSchema = z.enum(["deck", "single"]);
+export type CardType = z.infer<typeof cardTypeSchema>;
+
+export const CARD_TYPE_LABEL: Record<CardType, string> = {
+  deck: "완덱",
+  single: "낱장",
+};
+
 export const postStatusSchema = z.enum(["trading", "reserved", "completed"]);
 export type PostStatus = z.infer<typeof postStatusSchema>;
 
@@ -19,6 +27,7 @@ export type AuthorSettablePostStatus = z.infer<
 >;
 
 export const postSchema = z.object({
+  cardType: cardTypeSchema,
   title: z
     .string()
     .trim()

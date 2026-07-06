@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { BoardType } from "@/lib/validators/post";
+import { CARD_TYPE_LABEL, type BoardType, type CardType } from "@/lib/validators/post";
 import { StatusBadge } from "@/components/board/StatusBadge";
 import type { PostStatusValue } from "@/lib/ui";
 
@@ -8,6 +8,7 @@ export type PostListItem = {
   title: string;
   price: number | null;
   status: PostStatusValue;
+  cardType: CardType;
   view_count: number;
   created_at: string;
   author_nickname: string;
@@ -83,6 +84,9 @@ export function PostListTable({
                         : "text-black dark:text-zinc-50"
                     }`}
                   >
+                    <span className="mr-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                      [{CARD_TYPE_LABEL[post.cardType]}]
+                    </span>
                     {post.title}
                   </Link>
                 </td>

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { ImageUploader } from "@/components/board/ImageUploader";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/lib/ui";
-import type { BoardType } from "@/lib/validators/post";
+import { CARD_TYPE_LABEL, type BoardType, type CardType } from "@/lib/validators/post";
 
 type PostFormAction = (
   prevState: { error?: string } | undefined,
@@ -18,7 +18,12 @@ export function PostForm({
   imageUpload,
 }: {
   action: PostFormAction;
-  defaultValues?: { title: string; content: string; price: number | null };
+  defaultValues?: {
+    cardType: CardType;
+    title: string;
+    content: string;
+    price: number | null;
+  };
   submitLabel: string;
   imageUpload?: { userId: string; boardType: BoardType };
 }) {
@@ -26,6 +31,20 @@ export function PostForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <select
+        name="cardType"
+        defaultValue={defaultValues?.cardType ?? "single"}
+        required
+        className={inputClass}
+      >
+        {(Object.entries(CARD_TYPE_LABEL) as [CardType, string][]).map(
+          ([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ),
+        )}
+      </select>
       <input
         name="title"
         type="text"

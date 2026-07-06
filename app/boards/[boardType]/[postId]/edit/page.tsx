@@ -27,7 +27,7 @@ export default async function EditPostPage({
 
   const { data: post } = await supabase
     .from("posts")
-    .select("title, content, price, author_id")
+    .select("card_type, title, content, price, author_id")
     .eq("id", postId)
     .single();
 
@@ -50,6 +50,7 @@ export default async function EditPostPage({
         action={action}
         submitLabel="수정 완료"
         defaultValues={{
+          cardType: post.card_type,
           title: post.title,
           content: post.content,
           price: post.price,

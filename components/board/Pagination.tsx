@@ -6,18 +6,22 @@ export function Pagination({
   currentPage,
   totalPages,
   status,
+  category,
   q,
 }: {
   boardType: BoardType;
   currentPage: number;
   totalPages: number;
   status?: string;
+  category?: string;
   q?: string;
 }) {
   if (totalPages <= 1) return null;
 
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
   const statusQuery = status && status !== "all" ? `&status=${status}` : "";
+  const categoryQuery =
+    category && category !== "all" ? `&category=${category}` : "";
   const qQuery = q ? `&q=${encodeURIComponent(q)}` : "";
 
   return (
@@ -25,7 +29,7 @@ export function Pagination({
       {pages.map((page) => (
         <Link
           key={page}
-          href={`/boards/${boardType}?page=${page}${statusQuery}${qQuery}`}
+          href={`/boards/${boardType}?page=${page}${statusQuery}${categoryQuery}${qQuery}`}
           className={`rounded px-2 py-1 ${
             page === currentPage
               ? "bg-indigo-600 text-white dark:bg-indigo-500"

@@ -2,7 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { boardTypeSchema, BOARD_TITLE } from "@/lib/validators/post";
+import {
+  boardTypeSchema,
+  BOARD_TITLE,
+  CARD_TYPE_LABEL,
+  type CardType,
+} from "@/lib/validators/post";
 import { deletePost, updatePostStatus } from "@/lib/actions/posts";
 import { startChat } from "@/lib/actions/chat";
 import { StatusBadge } from "@/components/board/StatusBadge";
@@ -33,7 +38,7 @@ export default async function PostDetailPage({
   const { data: post } = await supabase
     .from("posts")
     .select(
-      "id, title, content, price, status, view_count, created_at, author_id, profiles(nickname)",
+      "id, title, content, price, status, card_type, view_count, created_at, author_id, profiles(nickname)",
     )
     .eq("id", postId)
     .eq("board_type", boardType)
@@ -55,6 +60,7 @@ export default async function PostDetailPage({
   const profile = post.profiles as unknown as { nickname: string } | null;
   const authorNickname = profile?.nickname ?? "알수없음";
   const status = post.status as PostStatusValue;
+  const cardType = post.card_type as CardType;
 
   let canChat = false;
   if (user && !isAuthor) {
@@ -93,6 +99,9 @@ export default async function PostDetailPage({
 
       <div className="mb-4 border-b border-zinc-300 pb-4 dark:border-zinc-700">
         <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+            [{CARD_TYPE_LABEL[cardType]}]
+          </span>
           <h1 className="text-xl font-bold text-black dark:text-zinc-50">
             {post.title}
           </h1>
