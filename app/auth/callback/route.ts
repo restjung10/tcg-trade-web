@@ -23,9 +23,13 @@ export async function GET(request: Request) {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("onboarded")
+          .select("onboarded, suspended_at")
           .eq("id", user.id)
           .single();
+
+        if (profile?.suspended_at) {
+          return NextResponse.redirect(`${origin}/suspended`);
+        }
 
         if (!profile?.onboarded) {
           return NextResponse.redirect(`${origin}/onboarding/nickname`);

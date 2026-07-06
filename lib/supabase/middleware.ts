@@ -5,10 +5,12 @@ const PROTECTED_PATTERNS = [
   /^\/mypage/,
   /^\/boards\/(sell|buy)\/write/,
   /^\/boards\/(sell|buy)\/[^/]+\/edit/,
+  /^\/boards\/(sell|buy)\/[^/]+\/report/,
   /^\/chat/,
   /^\/admin/,
 ];
 const ONBOARDING_PATH = "/onboarding/nickname";
+const SUSPENDED_PATH = "/suspended";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -53,11 +55,22 @@ export async function updateSession(request: NextRequest) {
   if (isProtected || path === ONBOARDING_PATH) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("onboarded")
+      .select("onboarded, suspended_at")
       .eq("id", user.id)
       .single();
 
-    if (profile && !profile.onboarded && path !== ONBOARDING_PATH) {
+    if (profile?.suspended_at && path !== SUSPENDED_PATH) {
+      const url = request.nextUrl.clone();
+      url.pathname = SUSPENDED_PATH;
+      return NextResponse.redirect(url);
+    }
+
+    if (
+      profile &&
+      !profile.suspended_at &&
+      !profile.onboarded &&
+      path !== ONBOARDING_PATH
+    ) {
       const url = request.nextUrl.clone();
       url.pathname = ONBOARDING_PATH;
       return NextResponse.redirect(url);

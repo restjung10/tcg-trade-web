@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/crypto";
 import { reviewBankAccount } from "@/lib/actions/admin";
@@ -9,7 +10,18 @@ const STATUS_LABEL = {
   rejected: "반려됨",
 } as const;
 
-export default async function AdminBankAccountsPage() {
+const STATUS_TABS = [
+  { value: "all", label: "전체" },
+  { value: "pending", label: "대기" },
+  { value: "approved", label: "승인" },
+  { value: "rejected", label: "거부" },
+] as const;
+
+export default async function AdminBankAccountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,11 +41,22 @@ export default async function AdminBankAccountsPage() {
     notFound();
   }
 
-  const { data: accounts, error: accountsError } = await supabase
+  const { status: statusParam } = await searchParams;
+  const statusFilter = STATUS_TABS.some((tab) => tab.value === statusParam)
+    ? statusParam!
+    : "all";
+
+  let accountsQuery = supabase
     .from("bank_accounts")
     .select(
       "id, bank_name, account_number_encrypted, account_holder_name, status, rejection_reason, created_at, profiles!user_id(nickname)",
-    )
+    );
+
+  if (statusFilter !== "all") {
+    accountsQuery = accountsQuery.eq("status", statusFilter);
+  }
+
+  const { data: accounts, error: accountsError } = await accountsQuery
     .order("status", { ascending: true })
     .order("created_at", { ascending: true });
 
@@ -64,6 +87,21 @@ export default async function AdminBankAccountsPage() {
       <h1 className="mb-4 text-xl font-bold text-black dark:text-zinc-50">
         계좌 인증 관리
       </h1>
+      <div className="mb-4 flex gap-2 text-sm">
+        {STATUS_TABS.map((tab) => (
+          <Link
+            key={tab.value}
+            href={`/admin/bank-accounts${tab.value === "all" ? "" : `?status=${tab.value}`}`}
+            className={`rounded-full px-3 py-1 ${
+              statusFilter === tab.value
+                ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                : "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
       {rows.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           신청 내역이 없습니다.

@@ -14,10 +14,13 @@ const STATUS_LABEL = {
 
 export default async function PostDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ boardType: string; postId: string }>;
+  searchParams: Promise<{ reported?: string }>;
 }) {
   const { boardType: boardTypeParam, postId } = await params;
+  const { reported } = await searchParams;
   const parsedBoardType = boardTypeSchema.safeParse(boardTypeParam);
   if (!parsedBoardType.success) {
     notFound();
@@ -146,7 +149,7 @@ export default async function PostDetailPage({
         </div>
       ) : (
         user && (
-          <div className="mt-8">
+          <div className="mt-8 flex items-center gap-2">
             <form action={startChat.bind(null, boardType, postId)}>
               <button
                 type="submit"
@@ -155,8 +158,20 @@ export default async function PostDetailPage({
                 채팅하기
               </button>
             </form>
+            <Link
+              href={`/boards/${boardType}/${postId}/report`}
+              className="rounded-md border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+            >
+              신고
+            </Link>
           </div>
         )
+      )}
+
+      {reported === "1" && (
+        <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+          신고가 접수되었습니다.
+        </p>
       )}
 
       <div className="mt-8">

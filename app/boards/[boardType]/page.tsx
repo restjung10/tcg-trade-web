@@ -23,7 +23,7 @@ export default async function BoardListPage({
   searchParams,
 }: {
   params: Promise<{ boardType: string }>;
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; q?: string }>;
 }) {
   const { boardType: boardTypeParam } = await params;
   const parsedBoardType = boardTypeSchema.safeParse(boardTypeParam);
@@ -32,13 +32,14 @@ export default async function BoardListPage({
   }
   const boardType = parsedBoardType.data;
 
-  const { page: pageParam, status: statusParam } = await searchParams;
+  const { page: pageParam, status: statusParam, q: qParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
   const statusFilter = STATUS_TABS.some((tab) => tab.value === statusParam)
     ? statusParam!
     : "all";
+  const searchQuery = (qParam ?? "").trim();
 
   const supabase = await createClient();
   let query = supabase
@@ -51,6 +52,11 @@ export default async function BoardListPage({
 
   if (statusFilter !== "all") {
     query = query.eq("status", statusFilter);
+  }
+
+  if (searchQuery) {
+    const escaped = searchQuery.replace(/[%,]/g, "");
+    query = query.or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`);
   }
 
   const { data, count } = await query
@@ -84,20 +90,46 @@ export default async function BoardListPage({
           글쓰기
         </Link>
       </div>
-      <div className="mb-4 flex gap-2 text-sm">
-        {STATUS_TABS.map((tab) => (
-          <Link
-            key={tab.value}
-            href={`/boards/${boardType}${tab.value === "all" ? "" : `?status=${tab.value}`}`}
-            className={`rounded-full px-3 py-1 ${
-              statusFilter === tab.value
-                ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
-                : "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
-            }`}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex gap-2 text-sm">
+          {STATUS_TABS.map((tab) => {
+            const params = new URLSearchParams();
+            if (tab.value !== "all") params.set("status", tab.value);
+            if (searchQuery) params.set("q", searchQuery);
+            const qs = params.toString();
+            return (
+              <Link
+                key={tab.value}
+                href={`/boards/${boardType}${qs ? `?${qs}` : ""}`}
+                className={`rounded-full px-3 py-1 ${
+                  statusFilter === tab.value
+                    ? "bg-black text-white dark:bg-zinc-50 dark:text-black"
+                    : "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-400"
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+        <form method="get" className="flex gap-2">
+          {statusFilter !== "all" && (
+            <input type="hidden" name="status" value={statusFilter} />
+          )}
+          <input
+            type="text"
+            name="q"
+            defaultValue={searchQuery}
+            placeholder="제목/본문 검색"
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          />
+          <button
+            type="submit"
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
           >
-            {tab.label}
-          </Link>
-        ))}
+            검색
+          </button>
+        </form>
       </div>
       <PostListTable
         posts={posts}
@@ -109,6 +141,7 @@ export default async function BoardListPage({
         currentPage={page}
         totalPages={totalPages}
         status={statusFilter}
+        q={searchQuery}
       />
     </div>
   );
