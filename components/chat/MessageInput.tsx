@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { notifyNewMessage } from "@/lib/actions/push";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/lib/ui";
 
@@ -38,6 +39,7 @@ export function MessageInput({
       }
     } else {
       setValue("");
+      notifyNewMessage(roomId, content).catch(() => {});
     }
     setSending(false);
   };

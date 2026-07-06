@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ChatRoomList, type ChatRoomSummary } from "@/components/chat/ChatRoomList";
+import { PushNotificationToggle } from "@/components/chat/PushNotificationToggle";
 
 export default async function ChatListPage() {
   const supabase = await createClient();
@@ -41,6 +42,7 @@ export default async function ChatListPage() {
       <h1 className="mb-4 text-xl font-bold text-black dark:text-zinc-50">
         채팅
       </h1>
+      <PushNotificationToggle />
       <ChatRoomList rooms={rooms} />
     </div>
   );
