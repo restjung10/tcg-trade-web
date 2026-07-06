@@ -19,7 +19,7 @@ async function fetchRecentPosts(
       "id, title, price, status, card_type, view_count, created_at, profiles(nickname)",
     )
     .eq("board_type", boardType)
-    .order("created_at", { ascending: false })
+    .order("bumped_at", { ascending: false })
     .limit(HOME_LIST_SIZE);
 
   return (data ?? []).map((row) => ({

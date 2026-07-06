@@ -8,7 +8,7 @@ import {
   CARD_TYPE_LABEL,
   type CardType,
 } from "@/lib/validators/post";
-import { deletePost, updatePostStatus } from "@/lib/actions/posts";
+import { deletePost, updatePostStatus, bumpPost } from "@/lib/actions/posts";
 import { startChat } from "@/lib/actions/chat";
 import { StatusBadge } from "@/components/board/StatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -24,10 +24,13 @@ export default async function PostDetailPage({
     reported?: string;
     chatLimited?: string;
     bankRequired?: string;
+    bumped?: string;
+    bumpError?: string;
   }>;
 }) {
   const { boardType: boardTypeParam, postId } = await params;
-  const { reported, chatLimited, bankRequired } = await searchParams;
+  const { reported, chatLimited, bankRequired, bumped, bumpError } =
+    await searchParams;
   const parsedBoardType = boardTypeSchema.safeParse(boardTypeParam);
   if (!parsedBoardType.success) {
     notFound();
@@ -157,6 +160,13 @@ export default async function PostDetailPage({
             마치면 자동으로 전환됩니다.
           </p>
           <div className="flex gap-2">
+            {status === "trading" && (
+              <form action={bumpPost.bind(null, boardType, postId)}>
+                <Button type="submit" variant="secondary">
+                  끌어올리기
+                </Button>
+              </form>
+            )}
             <LinkButton
               href={`/boards/${boardType}/${postId}/edit`}
               variant="secondary"
@@ -213,6 +223,24 @@ export default async function PostDetailPage({
         <p className="mb-4 text-sm text-red-500">
           계좌 인증이 완료된 사용자만 채팅을 시작할 수 있습니다. 마이페이지에서
           계좌를 등록하고 승인을 받아주세요.
+        </p>
+      )}
+
+      {bumped === "1" && (
+        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          게시글을 끌어올렸습니다.
+        </p>
+      )}
+
+      {bumpError === "too_soon" && (
+        <p className="mb-4 text-sm text-red-500">
+          끌어올리기는 하루에 한 번만 가능합니다.
+        </p>
+      )}
+
+      {bumpError === "status" && (
+        <p className="mb-4 text-sm text-red-500">
+          거래중 상태인 게시글만 끌어올릴 수 있습니다.
         </p>
       )}
 

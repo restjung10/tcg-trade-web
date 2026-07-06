@@ -235,6 +235,42 @@ export async function updatePostStatus(
   redirect(`/boards/${boardType}/${postId}`);
 }
 
+export async function bumpPost(boardType: BoardType, postId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: post } = await supabase
+    .from("posts")
+    .select("author_id, status")
+    .eq("id", postId)
+    .single();
+
+  if (!post || post.author_id !== user.id) {
+    redirect(`/boards/${boardType}/${postId}`);
+  }
+
+  if (post.status !== "trading") {
+    redirect(`/boards/${boardType}/${postId}?bumpError=status`);
+  }
+
+  const { error } = await supabase
+    .from("posts")
+    .update({ bumped_at: new Date().toISOString() })
+    .eq("id", postId);
+
+  if (error) {
+    redirect(`/boards/${boardType}/${postId}?bumpError=too_soon`);
+  }
+
+  redirect(`/boards/${boardType}/${postId}?bumped=1`);
+}
+
 export async function deletePost(boardType: BoardType, postId: string) {
   const supabase = await createClient();
   const {

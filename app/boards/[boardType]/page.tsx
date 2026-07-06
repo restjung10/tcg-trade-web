@@ -93,7 +93,7 @@ export default async function BoardListPage({
   }
 
   const { data, count } = await query
-    .order("created_at", { ascending: false })
+    .order("bumped_at", { ascending: false })
     .range(from, to);
 
   const posts: PostListItem[] = (data ?? []).map((row) => ({
