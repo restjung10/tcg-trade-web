@@ -50,6 +50,22 @@ export default async function PostDetailPage({
   const authorNickname = profile?.nickname ?? "알수없음";
   const status = post.status as keyof typeof STATUS_LABEL;
 
+  const { data: images } = await supabase
+    .from("post_images")
+    .select("final_path")
+    .eq("post_id", postId)
+    .eq("verification_status", "approved")
+    .order("sort_order");
+
+  const imageUrls = (images ?? [])
+    .map((img) => img.final_path)
+    .filter((path): path is string => Boolean(path))
+    .map(
+      (path) =>
+        supabase.storage.from("post-images-final").getPublicUrl(path).data
+          .publicUrl,
+    );
+
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
       <div className="mb-4 border-b border-zinc-300 pb-4 dark:border-zinc-700">
@@ -68,6 +84,20 @@ export default async function PostDetailPage({
         <p className="mb-4 text-lg font-semibold text-black dark:text-zinc-50">
           {post.price.toLocaleString("ko-KR")}원
         </p>
+      )}
+
+      {imageUrls.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2">
+          {imageUrls.map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={url}
+              src={url}
+              alt={post.title}
+              className="w-full rounded-md object-cover"
+            />
+          ))}
+        </div>
       )}
 
       <p className="whitespace-pre-wrap text-black dark:text-zinc-50">

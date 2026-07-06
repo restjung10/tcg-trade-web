@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
+import { ImageUploader } from "@/components/board/ImageUploader";
+import type { BoardType } from "@/lib/validators/post";
 
 type PostFormAction = (
   prevState: { error?: string } | undefined,
@@ -11,10 +13,12 @@ export function PostForm({
   action,
   defaultValues,
   submitLabel,
+  imageUpload,
 }: {
   action: PostFormAction;
   defaultValues?: { title: string; content: string; price: number | null };
   submitLabel: string;
+  imageUpload?: { userId: string; boardType: BoardType };
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
 
@@ -44,6 +48,13 @@ export function PostForm({
         defaultValue={defaultValues?.price ?? ""}
         className="rounded-md border border-zinc-300 px-4 py-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
       />
+      {imageUpload && (
+        <ImageUploader
+          userId={imageUpload.userId}
+          boardType={imageUpload.boardType}
+          required={imageUpload.boardType === "sell"}
+        />
+      )}
       {state?.error && <p className="text-sm text-red-500">{state.error}</p>}
       <button
         type="submit"

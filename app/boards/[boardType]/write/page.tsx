@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { boardTypeSchema } from "@/lib/validators/post";
 import { createPost } from "@/lib/actions/posts";
 import { PostForm } from "@/components/board/PostForm";
@@ -15,6 +16,15 @@ export default async function WritePostPage({
   }
   const boardType = parsed.data;
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
   const action = createPost.bind(null, boardType);
 
   return (
@@ -22,7 +32,11 @@ export default async function WritePostPage({
       <h1 className="mb-6 text-xl font-bold text-black dark:text-zinc-50">
         {boardType === "sell" ? "판매글" : "구매글"} 작성
       </h1>
-      <PostForm action={action} submitLabel="등록" />
+      <PostForm
+        action={action}
+        submitLabel="등록"
+        imageUpload={{ userId: user.id, boardType }}
+      />
     </div>
   );
 }

@@ -2,7 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { postSchema, type BoardType } from "@/lib/validators/post";
+import { processPendingImage } from "@/lib/image/process";
 
 type PostFormState = { error?: string } | undefined;
 
@@ -30,6 +32,49 @@ export async function createPost(
     redirect("/login");
   }
 
+  const imagePaths = formData
+    .getAll("imagePaths")
+    .filter((v): v is string => typeof v === "string" && v.length > 0);
+
+  if (boardType === "sell" && imagePaths.length === 0) {
+    return { error: "판매글은 이미지를 최소 1장 첨부해야 합니다." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("nickname")
+    .eq("id", user.id)
+    .single();
+  const nickname = profile?.nickname ?? "익명";
+  const watermarkText = `${nickname} · ${new Date()
+    .toISOString()
+    .slice(0, 16)
+    .replace("T", " ")}`;
+
+  let processedImages: Awaited<ReturnType<typeof processPendingImage>>[] = [];
+  if (imagePaths.length > 0) {
+    try {
+      processedImages = await Promise.all(
+        imagePaths.map((path) => processPendingImage(path, watermarkText)),
+      );
+    } catch {
+      return {
+        error:
+          "이미지 검증 서비스에 일시적으로 문제가 있습니다. 잠시 후 다시 시도해주세요.",
+      };
+    }
+  }
+
+  const approvedCount = processedImages.filter(
+    (img) => img.status === "approved",
+  ).length;
+
+  if (boardType === "sell" && approvedCount === 0) {
+    return {
+      error: "첨부한 이미지가 검증을 통과하지 못했습니다. 다른 이미지로 다시 시도해주세요.",
+    };
+  }
+
   const { data, error } = await supabase
     .from("posts")
     .insert({
@@ -44,6 +89,21 @@ export async function createPost(
 
   if (error || !data) {
     return { error: "게시글 작성 중 오류가 발생했습니다." };
+  }
+
+  if (processedImages.length > 0) {
+    const admin = createAdminClient();
+    await admin.from("post_images").insert(
+      processedImages.map((img, index) => ({
+        post_id: data.id,
+        original_path: img.originalPath,
+        final_path: img.finalPath,
+        verification_status: img.status,
+        ai_generated_score: img.score,
+        watermark_applied: img.status === "approved",
+        sort_order: index,
+      })),
+    );
   }
 
   redirect(`/boards/${boardType}/${data.id}`);
