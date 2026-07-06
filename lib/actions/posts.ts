@@ -37,6 +37,20 @@ export async function createPost(
     redirect("/login");
   }
 
+  // 계좌 인증(관리자 승인)이 완료된 사용자만 글을 쓸 수 있다 (RLS에서도 동일하게 강제됨).
+  const { data: bankAccount } = await supabase
+    .from("bank_accounts")
+    .select("status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (bankAccount?.status !== "approved") {
+    return {
+      error:
+        "계좌 인증이 완료된 사용자만 글을 작성할 수 있습니다. 마이페이지에서 계좌를 등록하고 승인을 받아주세요.",
+    };
+  }
+
   // 이미지 검증(Sightengine 호출)은 비용이 드는 작업이므로, 그 전에 먼저 rate limit을 확인한다.
   const { data: allowed } = await supabase.rpc("check_rate_limit", {
     p_action: "create_post",
