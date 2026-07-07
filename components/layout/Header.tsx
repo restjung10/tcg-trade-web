@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { NavLinks } from "@/components/layout/NavLinks";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const navLinkClass =
   "text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-zinc-50";
@@ -59,6 +60,7 @@ export async function Header() {
           />
         </div>
         <div className="flex items-center gap-3 text-sm">
+          <ThemeToggle />
           {user ? (
             <>
               <Link href="/mypage" className={navLinkClass}>
