@@ -8,6 +8,7 @@ export function Pagination({
   status,
   category,
   q,
+  searchType,
 }: {
   boardType: BoardType;
   currentPage: number;
@@ -15,6 +16,7 @@ export function Pagination({
   status?: string;
   category?: string;
   q?: string;
+  searchType?: string;
 }) {
   if (totalPages <= 1) return null;
 
@@ -23,13 +25,15 @@ export function Pagination({
   const categoryQuery =
     category && category !== "all" ? `&category=${category}` : "";
   const qQuery = q ? `&q=${encodeURIComponent(q)}` : "";
+  const searchTypeQuery =
+    searchType && searchType !== "all" ? `&searchType=${searchType}` : "";
 
   return (
     <nav className="mt-4 flex justify-center gap-2 text-sm">
       {pages.map((page) => (
         <Link
           key={page}
-          href={`/boards/${boardType}?page=${page}${statusQuery}${categoryQuery}${qQuery}`}
+          href={`/boards/${boardType}?page=${page}${statusQuery}${categoryQuery}${qQuery}${searchTypeQuery}`}
           className={`rounded px-2 py-1 ${
             page === currentPage
               ? "bg-indigo-600 text-white dark:bg-indigo-500"

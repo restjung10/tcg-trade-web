@@ -96,8 +96,13 @@ export function PostListTable({
                     {post.title}
                   </Link>
                 </td>
-                <td className="hidden py-2 text-center text-zinc-600 dark:text-zinc-400 md:table-cell">
-                  {post.author_nickname}
+                <td className="hidden truncate py-2 text-center text-zinc-600 dark:text-zinc-400 md:table-cell">
+                  <Link
+                    href={`/boards/${boardType}?q=${encodeURIComponent(post.author_nickname)}&searchType=author`}
+                    className="hover:underline"
+                  >
+                    {post.author_nickname}
+                  </Link>
                 </td>
                 <td className="hidden py-2 text-center text-zinc-500 dark:text-zinc-400 sm:table-cell">
                   {formatDate(post.created_at)}

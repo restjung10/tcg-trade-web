@@ -31,6 +31,11 @@ const CATEGORY_TABS = [
   ),
 ] as const;
 
+const SEARCH_TYPE_OPTIONS = [
+  { value: "all", label: "제목+내용" },
+  { value: "author", label: "글쓴이" },
+] as const;
+
 export default async function BoardListPage({
   params,
   searchParams,
@@ -41,6 +46,7 @@ export default async function BoardListPage({
     status?: string;
     category?: string;
     q?: string;
+    searchType?: string;
   }>;
 }) {
   const { boardType: boardTypeParam } = await params;
@@ -55,6 +61,7 @@ export default async function BoardListPage({
     status: statusParam,
     category: categoryParam,
     q: qParam,
+    searchType: searchTypeParam,
   } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
   const from = (page - 1) * PAGE_SIZE;
@@ -66,6 +73,11 @@ export default async function BoardListPage({
     ? categoryParam!
     : "all";
   const searchQuery = (qParam ?? "").trim();
+  const searchType = SEARCH_TYPE_OPTIONS.some(
+    (opt) => opt.value === searchTypeParam,
+  )
+    ? searchTypeParam!
+    : "all";
 
   const supabase = await createClient();
   let query = supabase
@@ -85,10 +97,22 @@ export default async function BoardListPage({
   }
 
   if (searchQuery) {
-    // PostgREST or() 필터 문법에 쓰이는 메타문자를 전부 제거해 필터 인젝션을 막는다.
+    // PostgREST or()/ilike 필터 문법에 쓰이는 메타문자를 전부 제거해 필터 인젝션을 막는다.
     const escaped = searchQuery.replace(/[%,()."]/g, "");
     if (escaped) {
-      query = query.or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`);
+      if (searchType === "author") {
+        const { data: matchingAuthors } = await supabase
+          .from("profiles")
+          .select("id")
+          .ilike("nickname", `%${escaped}%`);
+        const authorIds = (matchingAuthors ?? []).map((p) => p.id);
+        query =
+          authorIds.length > 0
+            ? query.in("author_id", authorIds)
+            : query.eq("author_id", "00000000-0000-0000-0000-000000000000");
+      } else {
+        query = query.or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`);
+      }
     }
   }
 
@@ -120,6 +144,7 @@ export default async function BoardListPage({
     if (merged.status !== "all") tabParams.set("status", merged.status);
     if (merged.category !== "all") tabParams.set("category", merged.category);
     if (searchQuery) tabParams.set("q", searchQuery);
+    if (searchType !== "all") tabParams.set("searchType", searchType);
     return tabParams.toString();
   }
 
@@ -177,11 +202,22 @@ export default async function BoardListPage({
           {categoryFilter !== "all" && (
             <input type="hidden" name="category" value={categoryFilter} />
           )}
+          <select
+            name="searchType"
+            defaultValue={searchType}
+            className={inputClass}
+          >
+            {SEARCH_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
           <input
             type="text"
             name="q"
             defaultValue={searchQuery}
-            placeholder="제목/본문 검색"
+            placeholder={searchType === "author" ? "글쓴이 검색" : "제목/본문 검색"}
             className={`${inputClass} flex-1 sm:flex-none`}
           />
           <Button type="submit" variant="secondary" size="sm">
@@ -201,6 +237,7 @@ export default async function BoardListPage({
         status={statusFilter}
         category={categoryFilter}
         q={searchQuery}
+        searchType={searchType}
       />
     </div>
   );
