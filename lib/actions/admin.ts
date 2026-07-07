@@ -72,6 +72,28 @@ export async function banBankAccountUser(userId: string, formData: FormData) {
   redirect("/admin/bank-accounts");
 }
 
+export async function suspendUserDirect(userId: string, formData: FormData) {
+  await assertAdmin();
+
+  const reason =
+    String(formData.get("suspensionReason") ?? "").slice(0, 500) ||
+    "관리자 조치";
+
+  const admin = createAdminClient();
+  await admin
+    .from("profiles")
+    .update({ suspended_at: new Date().toISOString(), suspension_reason: reason })
+    .eq("id", userId);
+
+  redirect("/admin/users");
+}
+
+export async function banUserFromUserList(userId: string, formData: FormData) {
+  await banUserCore(userId, formData);
+
+  redirect("/admin/users");
+}
+
 export async function unsuspendUser(userId: string) {
   await assertAdmin();
 

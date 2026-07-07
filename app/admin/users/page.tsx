@@ -1,10 +1,20 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { unsuspendUser, unbanKakaoUser } from "@/lib/actions/admin";
+import {
+  unsuspendUser,
+  unbanKakaoUser,
+  suspendUserDirect,
+  banUserFromUserList,
+} from "@/lib/actions/admin";
 import { Button } from "@/components/ui/Button";
+import { inputClass } from "@/lib/ui";
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,11 +35,24 @@ export default async function AdminUsersPage() {
   // service role(admin) 클라이언트로만 조회 가능하다.
   const admin = createAdminClient();
 
-  const { data: suspended } = await admin
+  const { q: qParam } = await searchParams;
+  const searchQuery = (qParam ?? "").trim();
+
+  let usersQuery = admin
     .from("profiles")
-    .select("id, nickname, suspended_at, suspension_reason")
-    .not("suspended_at", "is", null)
-    .order("suspended_at", { ascending: false });
+    .select("id, nickname, created_at, suspended_at, suspension_reason");
+
+  if (searchQuery) {
+    // PostgREST or()/ilike 필터 문법에 쓰이는 메타문자를 제거해 필터 인젝션을 막는다.
+    const escaped = searchQuery.replace(/[%,()."]/g, "");
+    if (escaped) {
+      usersQuery = usersQuery.ilike("nickname", `%${escaped}%`);
+    }
+  }
+
+  const { data: users } = await usersQuery
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   const { data: blocked } = await admin
     .from("blocked_kakao_users")
@@ -44,35 +67,91 @@ export default async function AdminUsersPage() {
 
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold text-black dark:text-zinc-50">
-          정지된 사용자
+          회원 검색
         </h2>
-        {suspended && suspended.length > 0 ? (
+        <form method="get" className="mb-4 flex gap-2">
+          <input
+            type="text"
+            name="q"
+            defaultValue={searchQuery}
+            placeholder="닉네임으로 검색"
+            className={`${inputClass} flex-1 sm:flex-none`}
+          />
+          <Button type="submit" variant="secondary" size="sm">
+            검색
+          </Button>
+        </form>
+        {!searchQuery && (
+          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+            검색어가 없으면 최근 가입한 50명만 표시합니다.
+          </p>
+        )}
+        {users && users.length > 0 ? (
           <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {suspended.map((row) => (
-              <li
-                key={row.id}
-                className="flex items-center justify-between gap-3 py-3 text-sm"
-              >
-                <div>
-                  <p className="font-medium text-black dark:text-zinc-50">
-                    {row.nickname}
-                  </p>
-                  <p className="text-zinc-500 dark:text-zinc-400">
-                    사유: {row.suspension_reason ?? "-"} ·{" "}
-                    {String(row.suspended_at).slice(0, 10)}
-                  </p>
+            {users.map((row) => (
+              <li key={row.id} className="py-3 text-sm">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-black dark:text-zinc-50">
+                      {row.nickname}
+                    </p>
+                    <p className="text-zinc-500 dark:text-zinc-400">
+                      가입일: {String(row.created_at).slice(0, 10)}
+                      {row.suspended_at && (
+                        <>
+                          {" · "}
+                          <span className="text-red-500">
+                            정지됨 ({row.suspension_reason ?? "-"})
+                          </span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  {row.suspended_at ? (
+                    <form action={unsuspendUser.bind(null, row.id)}>
+                      <Button type="submit" variant="secondary" size="sm">
+                        정지 해제
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <form
+                        action={suspendUserDirect.bind(null, row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          name="suspensionReason"
+                          type="text"
+                          placeholder="정지 사유(선택)"
+                          className={`${inputClass} py-1`}
+                        />
+                        <Button type="submit" variant="danger" size="sm">
+                          정지
+                        </Button>
+                      </form>
+                      <form
+                        action={banUserFromUserList.bind(null, row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          name="banReason"
+                          type="text"
+                          placeholder="차단 사유(선택)"
+                          className={`${inputClass} py-1`}
+                        />
+                        <Button type="submit" variant="danger" size="sm">
+                          차단(재가입 금지)
+                        </Button>
+                      </form>
+                    </div>
+                  )}
                 </div>
-                <form action={unsuspendUser.bind(null, row.id)}>
-                  <Button type="submit" variant="secondary" size="sm">
-                    정지 해제
-                  </Button>
-                </form>
               </li>
             ))}
           </ul>
         ) : (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            정지된 사용자가 없습니다.
+            {searchQuery ? "검색 결과가 없습니다." : "회원이 없습니다."}
           </p>
         )}
       </section>

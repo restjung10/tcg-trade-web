@@ -201,8 +201,6 @@ export async function updatePostStatus(
   postId: string,
   formData: FormData,
 ) {
-  // "거래완료"는 채팅방의 실제 거래 절차를 통해서만 전환된다 (lib/actions/tradeTransaction.ts).
-  // 여기서는 작성자가 직접 고를 수 있는 거래중/예약중만 허용한다.
   const parsedStatus = authorSettablePostStatusSchema.safeParse(
     formData.get("status"),
   );
@@ -230,7 +228,27 @@ export async function updatePostStatus(
     redirect(`/boards/${boardType}/${postId}`);
   }
 
-  await supabase.from("posts").update({ status }).eq("id", postId);
+  // 시세조작 악용 방지: 채팅이 한 번도 없었던 게시글을 바로 거래완료로 바꾸는 것은 막는다
+  // (DB 트리거 0029에서도 동일하게 강제되므로 REST 직접 호출로는 우회할 수 없다).
+  if (status === "completed") {
+    const { count } = await supabase
+      .from("chat_rooms")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", postId);
+
+    if (!count) {
+      redirect(`/boards/${boardType}/${postId}?statusError=no_chat`);
+    }
+  }
+
+  const { error } = await supabase
+    .from("posts")
+    .update({ status })
+    .eq("id", postId);
+
+  if (error) {
+    redirect(`/boards/${boardType}/${postId}?statusError=no_chat`);
+  }
 
   redirect(`/boards/${boardType}/${postId}`);
 }

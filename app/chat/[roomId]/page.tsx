@@ -26,7 +26,7 @@ export default async function ChatRoomPage({
   const { data: room } = await supabase
     .from("chat_rooms")
     .select(
-      "id, buyer_id, seller_id, posts(id, title, board_type), buyer:profiles!buyer_id(nickname), seller:profiles!seller_id(nickname)",
+      "id, buyer_id, seller_id, posts(id, title, board_type, price), buyer:profiles!buyer_id(nickname), seller:profiles!seller_id(nickname)",
     )
     .eq("id", roomId)
     .single();
@@ -43,7 +43,26 @@ export default async function ChatRoomPage({
     id: string;
     title: string;
     board_type: "sell" | "buy";
+    price: number | null;
   } | null;
+
+  let thumbnailUrl: string | null = null;
+  if (post) {
+    const { data: thumbnail } = await supabase
+      .from("post_images")
+      .select("final_path")
+      .eq("post_id", post.id)
+      .eq("verification_status", "approved")
+      .order("sort_order")
+      .limit(1)
+      .maybeSingle();
+
+    if (thumbnail?.final_path) {
+      thumbnailUrl = supabase.storage
+        .from("post-images-final")
+        .getPublicUrl(thumbnail.final_path).data.publicUrl;
+    }
+  }
 
   const { data: messages } = await supabase
     .from("chat_messages")
@@ -67,28 +86,45 @@ export default async function ChatRoomPage({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8">
-      <div className="mb-4 flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800">
+      <div className="mb-4 flex items-center justify-between">
         <Link
           href="/chat"
           className="text-sm text-zinc-500 hover:underline dark:text-zinc-400"
         >
           ← 채팅 목록
         </Link>
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">
+        <span className="text-sm text-zinc-600 dark:text-zinc-400">
           {otherProfile?.nickname ?? "알수없음"}
-          {post && (
-            <>
-              {" · "}
-              <Link
-                href={`/boards/${post.board_type}/${post.id}`}
-                className="hover:underline"
-              >
-                {post.title}
-              </Link>
-            </>
-          )}
-        </div>
+        </span>
       </div>
+
+      {post && (
+        <Link
+          href={`/boards/${post.board_type}/${post.id}`}
+          className="mb-4 flex items-center gap-3 rounded-md border border-zinc-200 p-3 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+        >
+          {thumbnailUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={thumbnailUrl}
+              alt={post.title}
+              className="h-14 w-14 shrink-0 rounded-md object-cover"
+            />
+          ) : (
+            <div className="h-14 w-14 shrink-0 rounded-md bg-zinc-100 dark:bg-zinc-800" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-black dark:text-zinc-50">
+              {post.title}
+            </p>
+            {post.price !== null && (
+              <p className="text-sm text-indigo-600 dark:text-indigo-400">
+                {post.price.toLocaleString("ko-KR")}원
+              </p>
+            )}
+          </div>
+        </Link>
+      )}
       <TransactionPanel
         chatRoomId={roomId}
         currentUserId={user.id}
