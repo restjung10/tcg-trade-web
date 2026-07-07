@@ -11,6 +11,7 @@ import {
 import { deletePost, updatePostStatus, bumpPost } from "@/lib/actions/posts";
 import { startChat } from "@/lib/actions/chat";
 import { StatusBadge } from "@/components/board/StatusBadge";
+import { AuthorMenu } from "@/components/board/AuthorMenu";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { inputClass, type PostStatusValue } from "@/lib/ui";
@@ -118,12 +119,7 @@ export default async function PostDetailPage({
           <StatusBadge status={status} />
         </div>
         <div className="mt-2 flex gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <Link
-            href={`/boards/${boardType}?q=${encodeURIComponent(authorNickname)}&searchType=author`}
-            className="hover:underline"
-          >
-            {authorNickname}
-          </Link>
+          <AuthorMenu nickname={authorNickname} boardType={boardType} />
           <span>{String(post.created_at).slice(0, 10)}</span>
           <span>조회 {post.view_count + 1}</span>
         </div>

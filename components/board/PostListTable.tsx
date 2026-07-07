@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CARD_TYPE_LABEL, type BoardType, type CardType } from "@/lib/validators/post";
 import { StatusBadge } from "@/components/board/StatusBadge";
+import { AuthorMenu } from "@/components/board/AuthorMenu";
 import type { PostStatusValue } from "@/lib/ui";
 
 export type PostListItem = {
@@ -97,12 +98,10 @@ export function PostListTable({
                   </Link>
                 </td>
                 <td className="hidden truncate py-2 text-center text-zinc-600 dark:text-zinc-400 md:table-cell">
-                  <Link
-                    href={`/boards/${boardType}?q=${encodeURIComponent(post.author_nickname)}&searchType=author`}
-                    className="hover:underline"
-                  >
-                    {post.author_nickname}
-                  </Link>
+                  <AuthorMenu
+                    nickname={post.author_nickname}
+                    boardType={boardType}
+                  />
                 </td>
                 <td className="hidden py-2 text-center text-zinc-500 dark:text-zinc-400 sm:table-cell">
                   {formatDate(post.created_at)}
