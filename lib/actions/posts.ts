@@ -309,6 +309,20 @@ export async function deletePost(boardType: BoardType, postId: string) {
     redirect(`/boards/${boardType}/${postId}`);
   }
 
+  const admin = createAdminClient();
+  const { data: images } = await admin
+    .from("post_images")
+    .select("final_path")
+    .eq("post_id", postId);
+
+  const finalPaths = (images ?? [])
+    .map((img) => img.final_path)
+    .filter((path): path is string => Boolean(path));
+
+  if (finalPaths.length > 0) {
+    await admin.storage.from("post-images-final").remove(finalPaths);
+  }
+
   await supabase.from("posts").delete().eq("id", postId);
 
   redirect(`/boards/${boardType}`);

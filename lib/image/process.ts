@@ -32,6 +32,7 @@ export async function processPendingImage(
   const { score } = await checkAiGenerated(buffer);
 
   if (score >= AI_SCORE_THRESHOLD) {
+    await admin.storage.from(PENDING_BUCKET).remove([pendingPath]);
     return {
       originalPath: pendingPath,
       finalPath: null,
@@ -50,6 +51,10 @@ export async function processPendingImage(
   if (uploadError) {
     throw new Error("이미지 업로드 중 오류가 발생했습니다.");
   }
+
+  // 압축/워터마크 처리가 끝난 원본은 더 이상 필요 없으므로 Storage 용량이
+  // 영구히 새지 않도록 pending 버킷에서 정리한다.
+  await admin.storage.from(PENDING_BUCKET).remove([pendingPath]);
 
   return { originalPath: pendingPath, finalPath, status: "approved", score };
 }
